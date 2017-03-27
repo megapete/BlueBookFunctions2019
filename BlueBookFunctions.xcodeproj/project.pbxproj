@@ -6,8 +6,21 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D30453C21E89973E00CA581C /* LetteredFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D30453C01E89973E00CA581C /* LetteredFunctions.c */; };
+		D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C11E89973E00CA581C /* LetteredFunctions.h */; };
+		D30453C61E89976500CA581C /* IntegrationFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D30453C41E89976500CA581C /* IntegrationFunctions.c */; };
+		D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C51E89976500CA581C /* IntegrationFunctions.h */; };
+		D30453CA1E89991600CA581C /* libgsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D30453C91E89991600CA581C /* libgsl.a */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D30453B91E8996F800CA581C /* libBlueBookFunctions.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libBlueBookFunctions.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		D30453C01E89973E00CA581C /* LetteredFunctions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = LetteredFunctions.c; sourceTree = "<group>"; };
+		D30453C11E89973E00CA581C /* LetteredFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LetteredFunctions.h; sourceTree = "<group>"; };
+		D30453C41E89976500CA581C /* IntegrationFunctions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = IntegrationFunctions.c; sourceTree = "<group>"; };
+		D30453C51E89976500CA581C /* IntegrationFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntegrationFunctions.h; sourceTree = "<group>"; };
+		D30453C91E89991600CA581C /* libgsl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgsl.a; path = ../GNU_Scientific_Library/lib/libgsl.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -15,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D30453CA1E89991600CA581C /* libgsl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -24,7 +38,12 @@
 		D30453B01E8996F700CA581C = {
 			isa = PBXGroup;
 			children = (
+				D30453C01E89973E00CA581C /* LetteredFunctions.c */,
+				D30453C11E89973E00CA581C /* LetteredFunctions.h */,
+				D30453C41E89976500CA581C /* IntegrationFunctions.c */,
+				D30453C51E89976500CA581C /* IntegrationFunctions.h */,
 				D30453BA1E8996F800CA581C /* Products */,
+				D30453C81E89991600CA581C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -36,6 +55,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		D30453C81E89991600CA581C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D30453C91E89991600CA581C /* libgsl.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -43,6 +70,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */,
+				D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +132,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D30453C61E89976500CA581C /* IntegrationFunctions.c in Sources */,
+				D30453C21E89973E00CA581C /* LetteredFunctions.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,7 +231,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../GNU_Scientific_Library/include\"";
+				"HEADER_SEARCH_PATHS[arch=*]" = "\"$(SRCROOT)/../GNU_Scientific_Library/include\"";
+				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)/../GNU_Scientific_Library/lib\"";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"USER_HEADER_SEARCH_PATHS[arch=*]" = "";
 			};
 			name = Debug;
 		};
@@ -208,6 +243,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../GNU_Scientific_Library/include\"";
+				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)/../GNU_Scientific_Library/lib\"";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
