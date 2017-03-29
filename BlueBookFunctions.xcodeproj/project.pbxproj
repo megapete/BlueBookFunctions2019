@@ -8,9 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		D30453C21E89973E00CA581C /* LetteredFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D30453C01E89973E00CA581C /* LetteredFunctions.c */; };
-		D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C11E89973E00CA581C /* LetteredFunctions.h */; };
+		D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C11E89973E00CA581C /* LetteredFunctions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D30453C61E89976500CA581C /* IntegrationFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D30453C41E89976500CA581C /* IntegrationFunctions.c */; };
-		D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C51E89976500CA581C /* IntegrationFunctions.h */; };
+		D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453C51E89976500CA581C /* IntegrationFunctions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D30453CA1E89991600CA581C /* libgsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D30453C91E89991600CA581C /* libgsl.a */; };
 /* End PBXBuildFile section */
 
