@@ -12,10 +12,26 @@
 
 #define BBF_CONVERGENCE_ITERATIONS  (200)
 
-double SelfInductance(const PCH_CoilSection theSection)
+double SelfInductance(const PCH_CoilSection aSection)
 {
-    // let I1 = self.J * Double(self.diskRect.size.width * self.diskRect.size.height) / self.N
-    double sectionArea = (theSection.r2 - theSection.r1) * (theSection.z2 - theSection.r1);
+    // Check to make sure that r1<r2 and z1<z2 for aSection and if not, fix tthe values
+    PCH_CoilSection theSection = aSection;
+    
+    if (theSection.r1 > theSection.r2)
+    {
+        double newR1 = theSection.r2;
+        theSection.r2 = theSection.r1;
+        theSection.r1 = newR1;
+    }
+    
+    if (theSection.z1 > theSection.z2)
+    {
+        double newZ1 = theSection.z2;
+        theSection.z2 = theSection.z1;
+        theSection.z1 = newZ1;
+    }
+    
+    double sectionArea = (theSection.r2 - theSection.r1) * (theSection.z2 - theSection.z1);
     double I1 = theSection.J * sectionArea / theSection.N;
     
     double N1 = theSection.N;
@@ -56,13 +72,67 @@ double SelfInductance(const PCH_CoilSection theSection)
     return result;
 }
 
-double MutualInductance(const PCH_CoilSection fromSection, const PCH_CoilSection toSection)
+double MutualInductance(const PCH_CoilSection aFromSection, const PCH_CoilSection aToSection)
 {
-    bool isSameRadialPosition = fabs(fromSection.r1 - toSection.r1) < 0.001;
+    // Check to make sure that the two coil sections have the correct order for r1, r2, z1, and z2
     
-    double sectionArea1 = (fromSection.r2 - fromSection.r1) * (fromSection.z2 - fromSection.r1);
+    PCH_CoilSection fromSection = aFromSection;
+    PCH_CoilSection toSection = aToSection;
+    
+    if (fromSection.r1 > fromSection.r2)
+    {
+        double newR1 = fromSection.r2;
+        fromSection.r2 = fromSection.r1;
+        fromSection.r1 = newR1;
+    }
+    
+    if (fromSection.z1 > fromSection.z2)
+    {
+        double newZ1 = fromSection.z2;
+        fromSection.z2 = fromSection.z1;
+        fromSection.z1 = newZ1;
+    }
+    
+    if (toSection.r1 > toSection.r2)
+    {
+        double newR1 = toSection.r2;
+        toSection.r2 = toSection.r1;
+        toSection.r1 = newR1;
+    }
+    
+    if (toSection.z1 > toSection.z2)
+    {
+        double newZ1 = toSection.z2;
+        toSection.z2 = toSection.z1;
+        toSection.z1 = newZ1;
+    }
+    
+    bool isSameRadialPosition = fabs(aFromSection.r1 - aToSection.r1) < 0.001;
+    
+    // Coil sections in the same radial position must have the 'from' section lower than the 'to' section. Coil sections that are not in the same radial position must have the 'from' section closer to the core than the 'to' section.
+    
+    if (isSameRadialPosition)
+    {
+        if (fromSection.z1 > toSection.z1)
+        {
+            PCH_CoilSection newFrom = toSection;
+            toSection = fromSection;
+            fromSection = newFrom;
+        }
+    }
+    else
+    {
+        if (fromSection.r1 > toSection.r1)
+        {
+            PCH_CoilSection newFrom = toSection;
+            toSection = fromSection;
+            fromSection = newFrom;
+        }
+    }
+    
+    double sectionArea1 = (fromSection.r2 - fromSection.r1) * (fromSection.z2 - fromSection.z1);
     double I1 = fromSection.J * sectionArea1 / fromSection.N;
-    double sectionArea2 = (toSection.r2 - toSection.r1) * (toSection.z2 - toSection.r1);
+    double sectionArea2 = (toSection.r2 - toSection.r1) * (toSection.z2 - toSection.z1);
     double I2 = toSection.J * sectionArea2 / toSection.N;
     
     double N1 = fromSection.N;

@@ -19,7 +19,7 @@
 #define MU0 (4.0E-7 * M_PI)
 
 
-double SelfInductance(const PCH_CoilSection theSection);
-double MutualInductance(const PCH_CoilSection fromSection, const PCH_CoilSection toSection);
+double SelfInductance(const PCH_CoilSection aSection);
+double MutualInductance(const PCH_CoilSection aFromSection, const PCH_CoilSection aToSection);
 
 #endif /* Inductance_h */
