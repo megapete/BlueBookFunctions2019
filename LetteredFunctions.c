@@ -5,17 +5,18 @@
 //  Created by PeterCoolAssHuber on 2017-03-27.
 //  Copyright © 2017 Peter Huber. All rights reserved.
 //
+// These functions are basically ported from Swift code - there may be more comments in the original code.
 
 #include "LetteredFunctions.h"
 
-double J0(PCH_CoilSection theSection)
+double J0(const PCH_CoilSection theSection)
 {
     double sectionHt = fabs(theSection.z2 - theSection.z1);
     
     return theSection.J * sectionHt / (theSection.windowHt * BBF_WINDHT_FACTOR);
 }
 
-double J(int n, PCH_CoilSection theSection)
+double J(int n, const PCH_CoilSection theSection)
 {
     double nPi = (double)n * M_PI;
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
@@ -23,7 +24,7 @@ double J(int n, PCH_CoilSection theSection)
     return (2.0 * theSection.J / nPi) * (sin(nPi * (theSection.z2) / useWindHt) - sin(nPi * theSection.z1 / useWindHt));
 }
 
-double C(int n, PCH_CoilSection theSection)
+double C(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;
@@ -34,7 +35,7 @@ double C(int n, PCH_CoilSection theSection)
     return IntegralOfTK1(x1, x2);
 }
 
-double D(int n, PCH_CoilSection theSection)
+double D(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     
@@ -49,7 +50,7 @@ double D(int n, PCH_CoilSection theSection)
     return result;
 }
 
-double ScaledD(int n, PCH_CoilSection theSection)
+double ScaledD(int n, const PCH_CoilSection theSection)
 {
     // returns Rd where D = exp(2.0 * xc - x1) * Rd (xc and x1 are functions of n)
     
@@ -68,7 +69,7 @@ double ScaledD(int n, PCH_CoilSection theSection)
     return Ri0 / Rk0 * scaledCn;
 }
 
-double AlternateD(int n, PCH_CoilSection theSection)
+double AlternateD(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;
@@ -85,7 +86,7 @@ double AlternateD(int n, PCH_CoilSection theSection)
     return exp(2.0 * xc - x1) * Ri0 / Rk0 * scaledCn;
 }
 
-double E(int n, PCH_CoilSection theSection)
+double E(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;
@@ -95,7 +96,7 @@ double E(int n, PCH_CoilSection theSection)
     return IntegralOfTK1From0to(x2);
 }
 
-double F(int n, PCH_CoilSection theSection)
+double F(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;
@@ -107,7 +108,7 @@ double F(int n, PCH_CoilSection theSection)
     return result;
 }
 
-double ScaledF(int n, PCH_CoilSection theSection)
+double ScaledF(int n, const PCH_CoilSection theSection)
 {
     // return Rf where F = exp(2.0 * xc - x1) * Rf (xc and x1 are functions of n)
     
@@ -124,7 +125,7 @@ double ScaledF(int n, PCH_CoilSection theSection)
     return result;
 }
 
-double AlternateF(int n, PCH_CoilSection theSection)
+double AlternateF(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;
@@ -139,7 +140,7 @@ double AlternateF(int n, PCH_CoilSection theSection)
     return result;
 }
 
-double G(int n, PCH_CoilSection theSection)
+double G(int n, const PCH_CoilSection theSection)
 {
     double useWindHt = theSection.windowHt * BBF_WINDHT_FACTOR;
     double m = (double)n * M_PI / useWindHt;

@@ -34,20 +34,20 @@ typedef struct section_tag
 } PCH_CoilSection;
 
 // Function declarations
-double J0(PCH_CoilSection theSection);
-double J(int n, PCH_CoilSection theSection);
-double C(int n, PCH_CoilSection theSection);
-double D(int n, PCH_CoilSection theSection);
-double E(int n, PCH_CoilSection theSection);
-double F(int n, PCH_CoilSection theSection);
-double G(int n, PCH_CoilSection theSection);
+double J0(const PCH_CoilSection theSection);
+double J(int n, const PCH_CoilSection theSection);
+double C(int n, const PCH_CoilSection theSection);
+double D(int n, const PCH_CoilSection theSection);
+double E(int n, const PCH_CoilSection theSection);
+double F(int n, const PCH_CoilSection theSection);
+double G(int n, const PCH_CoilSection theSection);
 
 // Scaled versions of select functions
-double ScaledD(int n, PCH_CoilSection theSection);
-double ScaledF(int n, PCH_CoilSection theSection);
+double ScaledD(int n, const PCH_CoilSection theSection);
+double ScaledF(int n, const PCH_CoilSection theSection);
 
 // Alternate versions of select functions
-double AlternateD(int n, PCH_CoilSection theSection);
-double AlternateF(int n, PCH_CoilSection theSection);
+double AlternateD(int n, const PCH_CoilSection theSection);
+double AlternateF(int n, const PCH_CoilSection theSection);
 
 #endif /* LetteredFunctions_h */
