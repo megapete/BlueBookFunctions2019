@@ -10,10 +10,14 @@
 #define Inductance_h
 
 #include <stdio.h>
+#include <stdbool.h>
+
+
 #include "LetteredFunctions.h"
 #include "IntegrationFunctions.h"
 
 #define MU0 (4.0E-7 * M_PI)
+
 
 double SelfInductance(const PCH_CoilSection theSection);
 double MutualInductance(const PCH_CoilSection fromSection, const PCH_CoilSection toSection);
