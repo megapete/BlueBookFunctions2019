@@ -7,7 +7,7 @@
 //
 
 #include "BLAS_Matrix.h"
-
+#include "PCH_C_Logging.h"
 
 // Allocate memory for a double precision matrix of the given type
 __CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision, int rows, int columns)
