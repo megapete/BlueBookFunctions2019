@@ -14,6 +14,9 @@
 		D30453CA1E89991600CA581C /* libgsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D30453C91E89991600CA581C /* libgsl.a */; };
 		D30453CD1E8BDC8B00CA581C /* Inductance.c in Sources */ = {isa = PBXBuildFile; fileRef = D30453CB1E8BDC8B00CA581C /* Inductance.c */; };
 		D30453CE1E8BDC8B00CA581C /* Inductance.h in Headers */ = {isa = PBXBuildFile; fileRef = D30453CC1E8BDC8B00CA581C /* Inductance.h */; };
+		D37422D720083C690050D3DB /* BLAS_Matrix.c in Sources */ = {isa = PBXBuildFile; fileRef = D37422D520083C690050D3DB /* BLAS_Matrix.c */; };
+		D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */ = {isa = PBXBuildFile; fileRef = D37422D620083C690050D3DB /* BLAS_Matrix.h */; };
+		D37422DA2008F3740050D3DB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D37422D92008F3740050D3DB /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +28,10 @@
 		D30453C91E89991600CA581C /* libgsl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgsl.a; path = ../GNU_Scientific_Library/lib/libgsl.a; sourceTree = "<group>"; };
 		D30453CB1E8BDC8B00CA581C /* Inductance.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Inductance.c; sourceTree = "<group>"; };
 		D30453CC1E8BDC8B00CA581C /* Inductance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Inductance.h; sourceTree = "<group>"; };
+		D37422D520083C690050D3DB /* BLAS_Matrix.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = BLAS_Matrix.c; sourceTree = "<group>"; };
+		D37422D620083C690050D3DB /* BLAS_Matrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLAS_Matrix.h; sourceTree = "<group>"; };
+		D37422D92008F3740050D3DB /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		D37422DD2008F9270050D3DB /* PCH_C_Logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_C_Logging.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D37422DA2008F3740050D3DB /* Accelerate.framework in Frameworks */,
 				D30453CA1E89991600CA581C /* libgsl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -48,6 +56,9 @@
 				D30453C11E89973E00CA581C /* LetteredFunctions.h */,
 				D30453C41E89976500CA581C /* IntegrationFunctions.c */,
 				D30453C51E89976500CA581C /* IntegrationFunctions.h */,
+				D37422D520083C690050D3DB /* BLAS_Matrix.c */,
+				D37422D620083C690050D3DB /* BLAS_Matrix.h */,
+				D37422DD2008F9270050D3DB /* PCH_C_Logging.h */,
 				D30453BA1E8996F800CA581C /* Products */,
 				D30453C81E89991600CA581C /* Frameworks */,
 			);
@@ -64,6 +75,7 @@
 		D30453C81E89991600CA581C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D37422D92008F3740050D3DB /* Accelerate.framework */,
 				D30453C91E89991600CA581C /* libgsl.a */,
 			);
 			name = Frameworks;
@@ -77,6 +89,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */,
+				D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */,
 				D30453CE1E8BDC8B00CA581C /* Inductance.h in Headers */,
 				D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */,
 			);
@@ -139,6 +152,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D37422D720083C690050D3DB /* BLAS_Matrix.c in Sources */,
 				D30453CD1E8BDC8B00CA581C /* Inductance.c in Sources */,
 				D30453C61E89976500CA581C /* IntegrationFunctions.c in Sources */,
 				D30453C21E89973E00CA581C /* LetteredFunctions.c in Sources */,
@@ -276,6 +290,7 @@
 				D30453BF1E8996F800CA581C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
