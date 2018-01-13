@@ -25,16 +25,20 @@
 
 #endif
 
-#define DLog(...) do { if (DEBUG) fprintf(stderr, "%s:%d:%s: ", __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__); } while (0)
+// This is Mike Ash's method, from https://www.mikeash.com/pyblog/friday-qa-2009-08-21-writing-vararg-macros-and-functions.html
+#define DLog(fmt, ...) do { \
+if (DEBUG) \
+fprintf(stderr, "%s:%d:%s " fmt "\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); \
+} while(0)
 
-#define ALog(fmt, ...) do { if (DEBUG) { fprintf(stderr, "%s", fmt) ; assert(0); } else { fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)} } while (0)
 
-void test(char *fmt)
-{
-    do { if (DEBUG) fprintf(stderr, "%s: %s:%d:%s(): ", fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, "va_args"); } while (0);
-    
-    if (DEBUG) { fprintf(stderr, "%s", fmt) ; assert(0); } else { fprintf(stderr, "%s:%d:%s(): ", fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)}
-}
+#define ALog(fmt, ...) do { \
+if (DEBUG) \
+{ fprintf(stderr, fmt " ", ## __VA_ARGS__); assert(0); } \
+else \
+{ fprintf(stderr, "%s:%d:%s " fmt "\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); } \
+} while (0)
+
 
 
 #endif /* PCH_C_Logging_h */
