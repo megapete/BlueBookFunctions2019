@@ -11,6 +11,170 @@
 #include "BLAS_Matrix.h"
 #include "PCH_C_Logging.h"
 
+// Private routines
+__CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals, size_t *buffSize);
+
+char *ElementString(BLAS_Matrix *matrix, unsigned int row, unsigned int col);
+
+// Calling routines for the Set...Value should check the return value - if false, something went wrong
+
+bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value)
+{
+    if (theMatrix->precision != doublePrecisionMatrix)
+    {
+        DLog("Matrix is not double precision");
+        return false;
+    }
+    
+    if (row >= theMatrix->numRows || col >= theMatrix->numCols)
+    {
+        DLog("Index out of range!");
+        return false;
+    }
+    
+    int index = -1;
+    
+    switch (theMatrix->type) {
+            
+        case vectorMatrix:
+            
+            index = row + col;
+            break;
+            
+        case generalMatrix:
+            
+            index = col * theMatrix->numRows + row;
+            break;
+            
+        case symmetricMatrix:
+        {
+            int useRow = row;
+            int useCol = col;
+            
+            if (col < row)
+            {
+                useRow = col;
+                useCol = row;
+            }
+            
+            index = useRow + useCol * (useCol + 1) / 2;
+            break;
+        }
+        case diagonalMatrix:
+            if (row == col)
+            {
+                index = row;
+            }
+            break;
+            
+        case upperTriangularMatrix:
+        case lowerTriangularMatrix:
+        case bandedMatrix:
+        {
+            int kl = theMatrix->numSubDiags;
+            int ku = theMatrix->numSuperDiags;
+            
+            if ((row <= col + kl) && (col <= row + ku))
+            {
+                index = col * (2 * kl + ku + 1) + kl + ku + row - col;
+            }
+            
+            break;
+        }
+        default:
+            break;
+    }
+    
+    if (index < 0)
+    {
+        DLog("Illegal index for this matrix type!");
+        return false;
+    }
+    
+    theMatrix->buffer[index] = value;
+    
+    return true;
+}
+
+bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value)
+{
+    if (theMatrix->precision != complexPrecisionMatrix)
+    {
+        DLog("Matrix is not complex precision");
+        return false;
+    }
+    
+    if (row >= theMatrix->numRows || col >= theMatrix->numCols)
+    {
+        DLog("Index out of range!");
+        return false;
+    }
+    
+    int index = -1;
+    
+    switch (theMatrix->type) {
+            
+        case vectorMatrix:
+            
+            index = row + col;
+            break;
+            
+        case generalMatrix:
+            
+            index = col * theMatrix->numRows + row;
+            break;
+            
+        case symmetricMatrix:
+        {
+            int useRow = row;
+            int useCol = col;
+            
+            if (col < row)
+            {
+                useRow = col;
+                useCol = row;
+            }
+            
+            index = useRow + useCol * (useCol + 1) / 2;
+            break;
+        }
+        case diagonalMatrix:
+            if (row == col)
+            {
+                index = row;
+            }
+            break;
+            
+        case upperTriangularMatrix:
+        case lowerTriangularMatrix:
+        case bandedMatrix:
+        {
+            int kl = theMatrix->numSubDiags;
+            int ku = theMatrix->numSuperDiags;
+            
+            if ((row <= col + kl) && (col <= row + ku))
+            {
+                index = col * (2 * kl + ku + 1) + kl + ku + row - col;
+            }
+            
+            break;
+        }
+        default:
+            break;
+    }
+    
+    if (index < 0)
+    {
+        DLog("Illegal index for this matrix type!");
+        return false;
+    }
+    
+    __CLPK_doublecomplex *compBuff = (__CLPK_doublecomplex *)theMatrix->buffer;
+    compBuff[index] = value;
+    
+    return true;
+}
+
 // Calling routines of the Get...Value functions should test the real value returned for the GET_VALUE_ERROR error code.
 
 __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
@@ -23,7 +187,7 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
     
     if (row >= theMatrix->numRows || col >= theMatrix->numCols)
     {
-        DLog("Illegal index!");
+        DLog("Index out of range!");
         return GET_VALUE_ERROR;
     }
     
@@ -38,11 +202,11 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
             
         case generalMatrix:
             
-            index = col * theMatrix->numRows + row
+            index = col * theMatrix->numRows + row;
             break;
             
         case symmetricMatrix:
-            
+        {
             int useRow = row;
             int useCol = col;
             
@@ -52,9 +216,9 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
                 useCol = row;
             }
             
-            index = useRow + useCol * (useCol + 1) / 2];
+            index = useRow + useCol * (useCol + 1) / 2;
             break;
-            
+        }
         case diagonalMatrix:
             if (row == col)
             {
@@ -65,17 +229,17 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
         case upperTriangularMatrix:
         case lowerTriangularMatrix:
         case bandedMatrix:
+        {
+            int kl = theMatrix->numSubDiags;
+            int ku = theMatrix->numSuperDiags;
             
-            kl = theMatrix->numSubDiags;
-            ku = theMatrix->numSuperDiags;
-            
-            if (row <= col + kl) && (col <= row + ku)
+            if ((row <= col + kl) && (col <= row + ku))
             {
-                index = col * (2 * kl + ku + 1) + kl + ku + row - col
+                index = col * (2 * kl + ku + 1) + kl + ku + row - col;
             }
             
             break;
-            
+        }
         default:
             break;
     }
@@ -86,6 +250,131 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
     }
     
     return theMatrix->buffer[index];
+}
+
+__CLPK_doublecomplex GetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
+{
+    __CLPK_doublecomplex result = {0.0, 0.0};
+    
+    if (theMatrix->precision != complexPrecisionMatrix)
+    {
+        DLog("Matrix is not complex precision");
+        result.r = GET_VALUE_ERROR;
+        return result;
+    }
+    
+    if (row >= theMatrix->numRows || col >= theMatrix->numCols)
+    {
+        DLog("Index out of range!");
+        result.r = GET_VALUE_ERROR;
+        return result;
+    }
+    
+    int index = -1;
+    
+    switch (theMatrix->type) {
+            
+        case vectorMatrix:
+            
+            index = row + col;
+            break;
+            
+        case generalMatrix:
+            
+            index = col * theMatrix->numRows + row;
+            break;
+            
+        case symmetricMatrix:
+        {
+            int useRow = row;
+            int useCol = col;
+            
+            if (col < row)
+            {
+                useRow = col;
+                useCol = row;
+            }
+            
+            index = useRow + useCol * (useCol + 1) / 2;
+            break;
+        }
+        case diagonalMatrix:
+            if (row == col)
+            {
+                index = row;
+            }
+            break;
+            
+        case upperTriangularMatrix:
+        case lowerTriangularMatrix:
+        case bandedMatrix:
+        {
+            int kl = theMatrix->numSubDiags;
+            int ku = theMatrix->numSuperDiags;
+            
+            if ((row <= col + kl) && (col <= row + ku))
+            {
+                index = col * (2 * kl + ku + 1) + kl + ku + row - col;
+            }
+            
+            break;
+        }
+        default:
+            break;
+    }
+    
+    if (index < 0)
+    {
+        return result;
+    }
+    
+    __CLPK_doublecomplex *complexBuff = (__CLPK_doublecomplex *)theMatrix->buffer;
+    
+    result = complexBuff[index];
+    
+    return result;
+}
+
+BLAS_Matrix *CopyMatrix(BLAS_Matrix *srcMatrix)
+{
+    if (srcMatrix == NULL)
+    {
+        DLog("Cannot copy NULL matrix!");
+        return NULL;
+    }
+    
+    size_t buffSize = 0;
+    
+    void *buff = AllocateMatrix(srcMatrix->type, srcMatrix->precision, srcMatrix->numRows, srcMatrix->numCols, srcMatrix->numSubDiags, srcMatrix->numSuperDiags, &buffSize);
+    
+    if (buff == NULL)
+    {
+        DLog("Could not allocate buffer for matrix!");
+        return NULL;
+    }
+    
+    
+    memcpy(buff, srcMatrix->buffer, buffSize);
+    
+    BLAS_Matrix *newMatrix = malloc(sizeof(BLAS_Matrix));
+    
+    if (newMatrix == NULL)
+    {
+        DLog("Could not allocate memory for matrix struct!");
+        free(buff);
+        return NULL;
+    }
+    
+    newMatrix->type = srcMatrix->type;
+    newMatrix->precision = srcMatrix->precision;
+    newMatrix->numRows = srcMatrix->numRows;
+    newMatrix->numCols = srcMatrix->numCols;
+    newMatrix->numSubDiags = srcMatrix->numSubDiags;
+    newMatrix->numSuperDiags = srcMatrix->numSuperDiags;
+    newMatrix->buffer = buff;
+    newMatrix->bufferSize = buffSize;
+    
+    return newMatrix;
 }
 
 BLAS_Matrix *CreateVector(MatrixType type, MatrixPrecision precision, unsigned int numElements)
@@ -183,7 +472,9 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
         matrix->numSuperDiags = 0;
     }
     
-    void *buff = AllocateMatrix(type , precision, rows, columns, subDiagonals, superDiagonals);
+    size_t buffSize = 0;
+    
+    void *buff = AllocateMatrix(type , precision, rows, columns, subDiagonals, superDiagonals, &buffSize);
     
     if (buff == NULL)
     {
@@ -193,12 +484,13 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
     }
     
     matrix->buffer = buff;
+    matrix->bufferSize = buffSize;
     
     return matrix;
 }
 
 // Allocate memory for a matrix of the given type & precision
-__CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals)
+__CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals, size_t *buffSize)
 {
     void *result = NULL;
     
@@ -219,12 +511,12 @@ __CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  u
         return NULL;
     }
     
-    size_t numElements = 0
+    size_t numElements = 0;
     // Take care of the different matrix types
     if (type == vectorMatrix)
     {
         // Vectors only have a single row (or column). We will take the higher of rows or columns as the dimension of the vector.
-        numElements = (rows > columns ? rows : columns)
+        numElements = (rows > columns ? rows : columns);
     }
     else if (type == generalMatrix)
     {
@@ -261,7 +553,76 @@ __CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  u
     if (result == NULL)
     {
         DLog("Could not allocate memory");
+        *buffSize = 0;
+    }
+    else
+    {
+        *buffSize = numElements * elementSize;
     }
     
+    return result;
+}
+
+char *MatrixAsString(BLAS_Matrix *theMatrix)
+{
+    char buffer[32567] = "";
+    
+    for (int j=0; j<theMatrix->numRows; j++)
+    {
+        strcat(buffer, "[ ");
+        for (int i=0; i<theMatrix->numCols; i++)
+        {
+            if (theMatrix->precision == doublePrecisionMatrix)
+            {
+                __CLPK_doublereal value = GetDoubleValue(theMatrix, j, i);
+                char tempString[11];
+                snprintf(tempString, 11, "%10.3G", value);
+                strcat(buffer, tempString);
+            }
+            else if (theMatrix->precision == complexPrecisionMatrix)
+            {
+                __CLPK_doublecomplex value = GetComplexValue(theMatrix, j, i);
+                char tempString[21];
+                snprintf(tempString, 21, "%10.3G%+10.3G", value.r, value.i);
+            }
+            else
+            {
+                DLog("Illegal precision specification");
+                return NULL;
+            }
+        }
+        strcat(buffer, " ]\n");
+    }
+    
+    char *result = malloc(strlen(buffer) + 1);
+    strcpy(result, buffer);
+    return result;
+}
+
+// Private function to convert the element at the given row and column into a string. The calling function is responsible for freeing the returned pointer.
+char *ElementString(BLAS_Matrix *matrix, unsigned int row, unsigned int col)
+{
+    // allow space for a ridiculously large string
+    char tempString[256];
+    
+    if (matrix->precision == doublePrecisionMatrix)
+    {
+        __CLPK_doublereal value = GetDoubleValue(matrix, row, col);
+        snprintf(tempString, 256, "%.3G", value);
+    }
+    else if (matrix->precision == complexPrecisionMatrix)
+    {
+        __CLPK_doublecomplex value = GetComplexValue(matrix, row, col);
+        
+        snprintf(tempString, 256, "%.3G%+.3G", value.r, value.i);
+    }
+    else
+    {
+        DLog("Illegal precision specification");
+        return NULL;
+    }
+    
+    char *result = malloc(strlen(tempString) + 1);
+    strcpy(result, tempString);
     return result;
 }

@@ -6,7 +6,7 @@
 //  Copyright © 2018 Peter Huber. All rights reserved.
 //
 
-// NOTE: Only double and double_complex matrices are modeled. This file is intened to make it easier to create and use BLAS and LAPACK matrices and functions. It is written in C to allow easier portability between Macs and Windows machines. There are a bunch of preprocesser directives for correct compilation but the underlying projects will need to load the correct framework/library.
+// NOTE: Only double and double_complex matrices are modeled. This file is intened to make it easier to create and use BLAS and LAPACK matrices and functions. It is written in C to allow easier portability between Macs and Windows machines. There are some preprocessor directives for correct compilation but the underlying projects will need to load the correct framework/library.
 
 // NOTE: All buffers are assumed to be in COLUMN-MAJOR order
 
@@ -40,6 +40,7 @@ typedef struct _tagMatrix {
     unsigned int numSuperDiags;
     unsigned int numSubDiags;
     
+    size_t bufferSize; // in bytes
     __CLPK_doublereal *buffer;
     
 } BLAS_Matrix;
@@ -53,13 +54,16 @@ __CLPK_doublecomplex GetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, u
 
 // Set the value at the given row/column
 bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value);
-bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value);)
+bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value);
 
 // Create a new vector (convenience routine)
 BLAS_Matrix *CreateVector(MatrixType type, MatrixPrecision precision, unsigned int numElements);
 // Create a new matrix
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals);
+// Copy an existing matrix (or vector)
+BLAS_Matrix *CopyMatrix(BLAS_Matrix *srcMatrix);
 
-
+// Simple function to get the string representation of the matrix. Note that this should probably only be used for small matrices (ie: during debugging)
+char *MatrixAsString(BLAS_Matrix *theMatrix);
 
 #endif /* BLAS_Matrix_h */
