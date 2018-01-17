@@ -337,6 +337,71 @@ __CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int 
     return result;
 }
 
+BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublecomplex beta, BLAS_Matrix *C)
+{
+    if (A == NULL || B == NULL)
+    {
+        DLog("A and B must be non-NULL");
+        return NULL;
+    }
+    
+    if ((A->type != generalMatrix && A->type != vectorMatrix) || (B->type != generalMatrix && B->type != vectorMatrix) || (C != NULL && (C->type != generalMatrix && C->type != vectorMatrix)))
+    {
+        DLog("At this time, only general matrices or vectors can be passed to this routine");
+        return NULL;
+    }
+    
+    // do some error-checking first
+    if (A->precision != B->precision)
+    {
+        DLog("Both matrices must be of the same type");
+        return NULL;
+    }
+    
+    if (A->precision != complexPrecisionMatrix)
+    {
+        DLog("This call is for Double Precision Matrices!");
+        return NULL;
+    }
+    
+    __CLPK_integer Arows = (transA == CblasNoTrans ? A->numRows : A->numCols);
+    __CLPK_integer Acols = (transA == CblasNoTrans ? A->numCols : A->numRows);
+    __CLPK_integer Brows = (transB == CblasNoTrans ? B->numRows : B->numCols);
+    __CLPK_integer Bcols = (transB == CblasNoTrans ? B->numCols : B->numRows);
+    
+    if (Acols != Brows)
+    {
+        DLog("Incompatible A- & B-matrix dimensions!");
+        return NULL;
+    }
+    
+    if (C != NULL && (C->numRows != Arows || C->numCols != Bcols))
+    {
+        DLog("Incompatible C-matrix dimensions!");
+        return NULL;
+    }
+    
+    __CLPK_integer k = Acols;
+    __CLPK_integer m = Arows;
+    __CLPK_integer n = Bcols;
+    
+    __CLPK_integer lda = (transA == CblasNoTrans ? m : k);
+    __CLPK_integer ldb = (transB == CblasNoTrans ? k : n);
+    __CLPK_integer ldc = m;
+    
+    BLAS_Matrix *newC = (C != NULL ? CopyMatrix(C) : CreateMatrix(generalMatrix, complexPrecisionMatrix, ldc, n, 0, 0));
+    
+    if (newC == NULL)
+    {
+        DLog("Could not create newC matrix");
+        return NULL;
+    }
+    
+    cblas_zgemm(CblasColMajor, transA, transB, m, n, k, &alpha, A->buffer, lda, B->buffer, ldb, &beta, newC->buffer, ldc);
+    
+    return newC;
+}
+
 BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublereal beta, BLAS_Matrix *C)
 {
     if (A == NULL || B == NULL)
@@ -345,9 +410,9 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
         return NULL;
     }
     
-    if (A->type != generalMatrix || B->type != generalMatrix || (C != NULL && C->type != generalMatrix))
+    if ((A->type != generalMatrix && A->type != vectorMatrix) || (B->type != generalMatrix && B->type != vectorMatrix) || (C != NULL && (C->type != generalMatrix && C->type != vectorMatrix)))
     {
-        DLog("At this time, only general matrices can be passed to this routine");
+        DLog("At this time, only general matrices or vectors can be passed to this routine");
         return NULL;
     }
     
@@ -355,6 +420,12 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
     if (A->precision != B->precision)
     {
         DLog("Both matrices must be of the same type");
+        return NULL;
+    }
+    
+    if (A->precision != doublePrecisionMatrix)
+    {
+        DLog("This call is for Double Precision Matrices!");
         return NULL;
     }
     
@@ -479,28 +550,39 @@ BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix)
     return newMatrix;
 }
 
-BLAS_Matrix *CreateVector(MatrixType type, MatrixPrecision precision, unsigned int numElements)
+BLAS_Matrix *CreateVector(MatrixPrecision precision, unsigned int numElements)
 {
-    return CreateMatrix(type, precision, 0, numElements, 0, 0);
+    return CreateMatrix(vectorMatrix, precision, numElements, 0, 0, 0);
 }
 
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals)
 {
     // Do a bunch of error-checking to start
-    if (rows == 0 && columns == 0)
+    if (rows == 0 || columns == 0)
     {
-        DLog("Both rows and columns are 0");
+        DLog("Either or both of rows and columns are 0");
         return NULL;
     }
     
-    if (type != vectorMatrix && (rows == 0 || columns == 0))
+    if (type != vectorMatrix && (rows == 1 || columns == 1))
     {
-        DLog("Only vectors can be specified with 0 rows or 0 columns!");
-        return NULL;
+        DLog("Only vectors can be specified with 1 row or 1 column! Fixing!");
+        
+        if (rows == 1)
+        {
+            rows = columns;
+            columns = 1;
+        }
+        
+        type = vectorMatrix;
+        
+        subDiagonals = 0;
+        superDiagonals = 0;
     }
     
-    if (type == vectorMatrix && rows > 0 && columns > 0)
+    if (type == vectorMatrix && rows > 1 && columns > 1)
     {
+        // I don't think this code can ever be executed
         DLog("Vectors must be defined with at least one of 'rows' or 'columns' defined as 0");
         return NULL;
     }
@@ -545,13 +627,6 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
     
     matrix->numRows = rows;
     matrix->numCols = columns;
-    
-    if (type == vectorMatrix && columns == 0)
-    {
-        // We default vectors to being "single-row". Manipulation routines will have to consider this.
-        matrix->numRows = 0;
-        matrix->numCols = rows;
-    }
     
     if (type == upperTriangularMatrix)
     {

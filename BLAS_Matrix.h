@@ -57,7 +57,7 @@ bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, 
 bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value);
 
 // Create a new vector (convenience routine)
-BLAS_Matrix *CreateVector(MatrixType type, MatrixPrecision precision, unsigned int numElements);
+BLAS_Matrix *CreateVector(MatrixPrecision precision, unsigned int numElements);
 // Create a new matrix
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals);
 // Copy an existing matrix (or vector)
@@ -73,6 +73,8 @@ BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix);
 // A and B cannot be NULL
 // C can be NULL, but in the event that it is not, it will not be clobbered by the answer (as is the case in BLAS)
 BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublereal beta, BLAS_Matrix *C);
+
+BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublecomplex beta, BLAS_Matrix *C);
 
 
 // Simple function to get the string representation of the matrix. Note that this should probably only be used for small matrices (ie: during debugging)
