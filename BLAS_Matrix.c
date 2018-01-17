@@ -16,6 +16,8 @@ __CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  u
 
 char *ElementString(BLAS_Matrix *matrix, unsigned int row, unsigned int col);
 
+bool isVector(const BLAS_Matrix *matrix);
+
 // Calling routines for the Set...Value should check the return value - if false, something went wrong
 
 bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value)
@@ -177,7 +179,7 @@ bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col,
 
 // Calling routines of the Get...Value functions should test the real value returned for the GET_VALUE_ERROR error code.
 
-__CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
+__CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
 {
     if (theMatrix->precision != doublePrecisionMatrix)
     {
@@ -252,7 +254,7 @@ __CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsig
     return theMatrix->buffer[index];
 }
 
-__CLPK_doublecomplex GetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
+__CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
 {
     __CLPK_doublecomplex result = {0.0, 0.0};
     
@@ -335,7 +337,107 @@ __CLPK_doublecomplex GetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, u
     return result;
 }
 
-BLAS_Matrix *CopyMatrix(BLAS_Matrix *srcMatrix)
+BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublereal beta, BLAS_Matrix *C)
+{
+    if (A == NULL || B == NULL)
+    {
+        DLog("A and B must be non-NULL");
+        return NULL;
+    }
+    
+    if (A->type != generalMatrix || B->type != generalMatrix || (C != NULL && C->type != generalMatrix))
+    {
+        DLog("At this time, only general matrices can be passed to this routine");
+        return NULL;
+    }
+    
+    // do some error-checking first
+    if (A->precision != B->precision)
+    {
+        DLog("Both matrices must be of the same type");
+        return NULL;
+    }
+    
+    __CLPK_integer Arows = (transA == CblasNoTrans ? A->numRows : A->numCols);
+    __CLPK_integer Acols = (transA == CblasNoTrans ? A->numCols : A->numRows);
+    __CLPK_integer Brows = (transB == CblasNoTrans ? B->numRows : B->numCols);
+    __CLPK_integer Bcols = (transB == CblasNoTrans ? B->numCols : B->numRows);
+    
+    if (Acols != Brows)
+    {
+        DLog("Incompatible A- & B-matrix dimensions!");
+        return NULL;
+    }
+    
+    if (C != NULL && (C->numRows != Arows || C->numCols != Bcols))
+    {
+        DLog("Incompatible C-matrix dimensions!");
+        return NULL;
+    }
+    
+    __CLPK_integer k = Acols;
+    __CLPK_integer m = Arows;
+    __CLPK_integer n = Bcols;
+    
+    __CLPK_integer lda = (transA == CblasNoTrans ? m : k);
+    __CLPK_integer ldb = (transB == CblasNoTrans ? k : n);
+    __CLPK_integer ldc = m;
+    
+    BLAS_Matrix *newC = (C != NULL ? CopyMatrix(C) : CreateMatrix(generalMatrix, doublePrecisionMatrix, ldc, n, 0, 0));
+    
+    if (newC == NULL)
+    {
+        DLog("Could not create newC matrix");
+        return NULL;
+    }
+    
+    cblas_dgemm(CblasColMajor, transA, transB, m, n, k, alpha, A->buffer, lda, B->buffer, ldb, beta, newC->buffer, ldc);
+    
+    return newC;
+}
+
+BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix)
+{
+    // Diagonal matrices and vectors (as far as this library is concerned) are the same as their transposes.
+    if (srcMatrix->type == diagonalMatrix || isVector(srcMatrix))
+    {
+        return CopyMatrix(srcMatrix);
+    }
+    
+    BLAS_Matrix *newMatrix = CreateMatrix(srcMatrix->type, srcMatrix->precision, srcMatrix->numCols, srcMatrix->numRows, srcMatrix->numSuperDiags, srcMatrix->numSubDiags);
+    
+    for (int i=0; i<srcMatrix->numCols; i++)
+    {
+        for (int j=0; j<srcMatrix->numRows; j++)
+        {
+            if (srcMatrix->precision == doublePrecisionMatrix)
+            {
+                __CLPK_doublereal value = GetDoubleValue(srcMatrix, j, i);
+                SetDoubleValue(newMatrix, i, j, value);
+            }
+            else if (srcMatrix->precision == complexPrecisionMatrix)
+            {
+                __CLPK_doublecomplex value = GetComplexValue(srcMatrix, j, i);
+                SetComplexValue(newMatrix, i, j, value);
+            }
+            else
+            {
+                DLog("Illegal precision specified!");
+                free(newMatrix);
+                return NULL;
+            }
+        }
+    }
+    
+    return newMatrix;
+}
+
+bool isVector(const BLAS_Matrix *matrix)
+{
+    return (matrix->numRows == 1 || matrix->numCols == 1);
+}
+
+BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix)
 {
     if (srcMatrix == NULL)
     {

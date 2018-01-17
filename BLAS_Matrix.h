@@ -49,8 +49,8 @@ typedef struct _tagMatrix {
 #define GET_VALUE_ERROR DBL_MAX
 
 // Get the value stored at the given row/column
-__CLPK_doublereal GetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col);
-__CLPK_doublecomplex GetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col);
+__CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col);
+__CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col);
 
 // Set the value at the given row/column
 bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value);
@@ -61,7 +61,19 @@ BLAS_Matrix *CreateVector(MatrixType type, MatrixPrecision precision, unsigned i
 // Create a new matrix
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals);
 // Copy an existing matrix (or vector)
-BLAS_Matrix *CopyMatrix(BLAS_Matrix *srcMatrix);
+BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix);
+
+// Get the transpose of a matrix
+BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix);
+
+// Matrix multiplication. The function is basically a wrapper over the BLAS routine, which is defined as follows:
+// D := alpha * op(A) * op(B) + beta * C (note that 'D' does not exist in the BLAS, with the result clobbering C instead)
+// op(A) and op(B) depend on the transA and transB arguments passed in
+// Note that as far as I can tell, only general matrices are treated by the BLAS
+// A and B cannot be NULL
+// C can be NULL, but in the event that it is not, it will not be clobbered by the answer (as is the case in BLAS)
+BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublereal beta, BLAS_Matrix *C);
+
 
 // Simple function to get the string representation of the matrix. Note that this should probably only be used for small matrices (ie: during debugging)
 char *MatrixAsString(BLAS_Matrix *theMatrix);
