@@ -60,6 +60,8 @@ bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col,
 BLAS_Matrix *CreateVector(MatrixPrecision precision, unsigned int numElements);
 // Create a new matrix
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals);
+// Delete a matrix using this function to avoid memory leaks. Note that this function should only be used if the matrix was created using either CreateVector() or CreateMatrix() or if the matrix struct itself was created using malloc(). That is, do not call this function if you create the matrix on the stack (in which case the calling rouitne is responsible for freeing the buffer's memory)
+void DeleteMatrix(BLAS_Matrix *matrix);
 // Copy an existing matrix (or vector)
 BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix);
 
@@ -76,6 +78,8 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
 
 BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublecomplex beta, BLAS_Matrix *C);
 
+// Get the inverse of a matrix, if it is invertible (otherwise, return NULL)
+BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix);
 
 // Simple function to get the string representation of the matrix. Note that this should probably only be used for small matrices (ie: during debugging)
 char *MatrixAsString(BLAS_Matrix *theMatrix);

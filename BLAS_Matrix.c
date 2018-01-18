@@ -337,6 +337,97 @@ __CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int 
     return result;
 }
 
+BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
+{
+    if (srcMatrix->numRows != srcMatrix->numCols)
+    {
+        DLog("Only square matrices can be inverted");
+        return NULL;
+    }
+    
+    BLAS_Matrix *A = CopyMatrix(srcMatrix);
+    
+    if (A == NULL)
+    {
+        DLog("Could not copy source matrix");
+        return NULL;
+    }
+    
+    __CLPK_integer m = A->numRows;
+    __CLPK_integer n = A->numCols;
+    __CLPK_integer lda = m;
+    
+    int ipivCount = (m < n ? m : n);
+    __CLPK_integer ipiv[ipivCount];
+    
+    __CLPK_integer info = 0;
+    
+    if (A->precision == doublePrecisionMatrix)
+    {
+        dgetrf_(&m, &n, A->buffer, &lda, ipiv, &info);
+        
+        if (info != 0)
+        {
+            DLog("An error occurred in dgetrf_(): %d", info);
+            DeleteMatrix(A);
+            
+            return NULL;
+        }
+        
+        __CLPK_doublereal workSize;
+        __CLPK_integer lWork = -1;
+        
+        dgetri_(&n, A->buffer, &lda, ipiv, &workSize, &lWork, &info);
+        
+        lWork = (__CLPK_integer)workSize;
+        
+        __CLPK_doublereal work[lWork];
+        
+        dgetri_(&n, A->buffer, &lda, ipiv, work, &lWork, &info);
+        
+        if (info != 0)
+        {
+            DLog("An error occurred in dgetri_(): %d", info);
+            DeleteMatrix(A);
+            
+            return NULL;
+        }
+    }
+    else
+    {
+        zgetrf_(&m, &n, (__CLPK_doublecomplex *)(A->buffer), &lda, ipiv, &info);
+        
+        if (info != 0)
+        {
+            DLog("An error occurred in zgetrf_(): %d", info);
+            DeleteMatrix(A);
+            
+            return NULL;
+        }
+        
+        __CLPK_doublecomplex workSize;
+        __CLPK_integer lWork = -1;
+        
+        zgetri_(&n, (__CLPK_doublecomplex *)(A->buffer), &lda, ipiv, &workSize, &lWork, &info);
+        
+        lWork = (__CLPK_integer)workSize.r;
+        
+        __CLPK_doublecomplex work[lWork];
+        
+        zgetri_(&n, (__CLPK_doublecomplex *)(A->buffer), &lda, ipiv, work, &lWork, &info);
+        
+        if (info != 0)
+        {
+            DLog("An error occurred in zgetri_(): %d", info);
+            DeleteMatrix(A);
+            
+            return NULL;
+        }
+    }
+    
+    return A;
+}
+
 BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLAS_Matrix *A, int transB, BLAS_Matrix *B, __CLPK_doublecomplex beta, BLAS_Matrix *C)
 {
     if (A == NULL || B == NULL)
@@ -548,6 +639,15 @@ BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix)
     newMatrix->bufferSize = buffSize;
     
     return newMatrix;
+}
+
+void DeleteMatrix(BLAS_Matrix *matrix)
+{
+    if (matrix != NULL)
+    {
+        free(matrix->buffer);
+        free(matrix);
+    }
 }
 
 BLAS_Matrix *CreateVector(MatrixPrecision precision, unsigned int numElements)
