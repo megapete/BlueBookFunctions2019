@@ -18,20 +18,23 @@ char *ElementString(BLAS_Matrix *matrix, unsigned int row, unsigned int col);
 
 bool isVector(const BLAS_Matrix *matrix);
 
+// Private static variable to initialize a SolveResult struct to 0
+// static const struct _tagSolveResult emptySolveResult = {0};
+
 // Calling routines for the Set...Value should check the return value - if false, something went wrong
 
-bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value)
+MatrixStatus SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublereal value)
 {
     if (theMatrix->precision != doublePrecisionMatrix)
     {
         DLog("Matrix is not double precision");
-        return false;
+        return PRECISION_MISMATCH_MATRIX_ERROR;
     }
     
     if (row >= theMatrix->numRows || col >= theMatrix->numCols)
     {
         DLog("Index out of range!");
-        return false;
+        return ILLEGAL_INDEX_MATRIX_ERROR;
     }
     
     int index = -1;
@@ -89,27 +92,27 @@ bool SetDoubleValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, 
     
     if (index < 0)
     {
-        DLog("Illegal index for this matrix type!");
-        return false;
+        DLog("Unreachable index for this matrix type! Ignoring!");
+        return UNREACHABLE_INDEX_MATRIX_ERROR;
     }
     
     theMatrix->buffer[index] = value;
     
-    return true;
+    return NO_MATRIX_ERROR;
 }
 
-bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value)
+MatrixStatus SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, __CLPK_doublecomplex value)
 {
     if (theMatrix->precision != complexPrecisionMatrix)
     {
         DLog("Matrix is not complex precision");
-        return false;
+        return PRECISION_MISMATCH_MATRIX_ERROR;
     }
     
     if (row >= theMatrix->numRows || col >= theMatrix->numCols)
     {
         DLog("Index out of range!");
-        return false;
+        return ILLEGAL_INDEX_MATRIX_ERROR;
     }
     
     int index = -1;
@@ -168,28 +171,45 @@ bool SetComplexValue(BLAS_Matrix *theMatrix, unsigned int row, unsigned int col,
     if (index < 0)
     {
         DLog("Illegal index for this matrix type!");
-        return false;
+        return UNREACHABLE_INDEX_MATRIX_ERROR;
     }
     
     __CLPK_doublecomplex *compBuff = (__CLPK_doublecomplex *)theMatrix->buffer;
     compBuff[index] = value;
     
-    return true;
+    return NO_MATRIX_ERROR;
 }
 
 // Calling routines of the Get...Value functions should test the real value returned for the GET_VALUE_ERROR error code.
 
-__CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
+__CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, MatrixStatus *status)
 {
+    if (status != NULL)
+    {
+        *status = NO_MATRIX_ERROR;
+    }
+    
     if (theMatrix->precision != doublePrecisionMatrix)
     {
         DLog("Matrix is not double precision");
+        
+        if (status != NULL)
+        {
+            *status = PRECISION_MISMATCH_MATRIX_ERROR;
+        }
+        
         return GET_VALUE_ERROR;
     }
     
     if (row >= theMatrix->numRows || col >= theMatrix->numCols)
     {
         DLog("Index out of range!");
+        
+        if (status != NULL)
+        {
+            *status = ILLEGAL_INDEX_MATRIX_ERROR;
+        }
+        
         return GET_VALUE_ERROR;
     }
     
@@ -208,6 +228,7 @@ __CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row,
             break;
             
         case symmetricMatrix:
+        case positiveDefiniteMatrix:
         {
             int useRow = row;
             int useCol = col;
@@ -221,6 +242,7 @@ __CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row,
             index = useRow + useCol * (useCol + 1) / 2;
             break;
         }
+            
         case diagonalMatrix:
             if (row == col)
             {
@@ -242,6 +264,7 @@ __CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row,
             
             break;
         }
+            
         default:
             break;
     }
@@ -254,13 +277,24 @@ __CLPK_doublereal GetDoubleValue(const BLAS_Matrix *theMatrix, unsigned int row,
     return theMatrix->buffer[index];
 }
 
-__CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col)
+__CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int row, unsigned int col, MatrixStatus *status)
 {
+    if (status != NULL)
+    {
+        *status = NO_MATRIX_ERROR;
+    }
+    
     __CLPK_doublecomplex result = {0.0, 0.0};
     
     if (theMatrix->precision != complexPrecisionMatrix)
     {
         DLog("Matrix is not complex precision");
+        
+        if (status != NULL)
+        {
+            *status = PRECISION_MISMATCH_MATRIX_ERROR;
+        }
+        
         result.r = GET_VALUE_ERROR;
         return result;
     }
@@ -268,6 +302,12 @@ __CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int 
     if (row >= theMatrix->numRows || col >= theMatrix->numCols)
     {
         DLog("Index out of range!");
+        
+        if (status != NULL)
+        {
+            *status = ILLEGAL_INDEX_MATRIX_ERROR;
+        }
+        
         result.r = GET_VALUE_ERROR;
         return result;
     }
@@ -337,20 +377,183 @@ __CLPK_doublecomplex GetComplexValue(const BLAS_Matrix *theMatrix, unsigned int 
     return result;
 }
 
+void ReleaseSolveResult(SolveResult sResult)
+{
+    free(sResult.A);
+    free(sResult.AF);
+    free(sResult.B);
+    free(sResult.bErr);
+    free(sResult.C);
+    free(sResult.fErr);
+    free(sResult.R);
+    free(sResult.X);
+}
+
+
+SolveResult Solve(bool useExtendedMethod, BLAS_Matrix *A, BLAS_Matrix *B, BLAS_Factoring factor, BLAS_Transposing transpose, BLAS_Equilibrating equilibrate)
+{
+    SolveResult result = {0};
+    
+    if (factor == BLAS_Factored)
+    {
+        DLog("The use of pre-factored matrices is NOT yet implemented!");
+        result.status = ILLEGAL_FACTORING_SOLVE_ERROR;
+        return result;
+    }
+    
+    if (A->numCols != B->numRows)
+    {
+        DLog("Matrix dimensions are not compatible!");
+        result.status = DIMENSION_MISMATCH_MATRIX_ERROR;
+        return result;
+    }
+    
+    if (B->type != generalMatrix)
+    {
+        DLog("B matrix must be a general matrix");
+        result.status = ILLEGAL_TYPE_MATRIX_ERROR;
+        return result;
+    }
+    
+    // Set up some variables that are common to all the routines
+    result.A = malloc(A->bufferSize);
+    result.B = malloc(B->bufferSize);
+    memcpy(result.A, A->buffer, A->bufferSize);
+    memcpy(result.B, B->buffer, B->bufferSize);
+    
+    __CLPK_integer n = A->numRows;
+    result.lda = n;
+    result.ldb = n;
+    __CLPK_integer nrhs = B->numCols;
+    result.ipiv = malloc(n);
+    
+    // kl and ku are for triangular matrices but we'll create and initialize them even though other matrix types will not use them
+    __CLPK_integer kl = A->numSubDiags;
+    __CLPK_integer ku = A->numSuperDiags;
+    
+    if (!useExtendedMethod)
+    {
+        // Simple driver routines
+        
+        if (A->precision == doublePrecisionMatrix)
+        {
+            if (A->type == generalMatrix)
+            {
+                dgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
+            }
+            else if (A->type == bandedMatrix || A->type == upperTriangularMatrix || A->type == lowerTriangularMatrix || A->type == diagonalMatrix)
+            {
+                __CLPK_integer ldab = 2 * kl + ku + 1;
+                dgbsv_(&n, &kl, &ku, &nrhs,result.A, &ldab, result.ipiv, result.B, &result.ldb, &result.info);
+            }
+            else if (A->type == symmetricMatrix)
+            {
+                char uplo[2] = "U";
+                __CLPK_doublereal workSize;
+                __CLPK_integer lWork = -1;
+                
+                dsysv_(uplo, &n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &workSize, &lWork, &result.info);
+                
+                lWork = (__CLPK_integer)workSize;
+                __CLPK_doublereal work[lWork];
+                
+                dsysv_(uplo, &n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, work, &lWork, &result.info);
+            }
+            else if (A->type == positiveDefiniteMatrix)
+            {
+                char uplo[2] = "U";
+                
+                dposv_(uplo, &n, &nrhs, result.A, &result.lda, result.B, &result.ldb, &result.info);
+            }
+            else
+            {
+                DLog("Illegal matrix type!");
+                result.status = ILLEGAL_TYPE_MATRIX_ERROR;
+                return result;
+            }
+        }
+        else if (A->precision == complexPrecisionMatrix)
+        {
+            if (A->type == generalMatrix)
+            {
+                zgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
+            }
+        }
+        else
+        {
+            DLog("Unimplemented precision!");
+            result.status = ILLEGAL_PRECISION_MATRIX_ERROR;
+            return result;
+        }
+    }
+    else // routines with extended in/out arguments (not sure what they all do)
+    {
+        if (A->precision == doublePrecisionMatrix)
+        {
+            
+        }
+        else if (A->precision == complexPrecisionMatrix)
+        {
+            
+        }
+        else
+        {
+            DLog("Unimplemented precision!");
+            result.status = ILLEGAL_PRECISION_MATRIX_ERROR;
+            return result;
+        }
+    }
+    
+    if (result.info != 0)
+    {
+        result.status = SOLVE_MATRIX_ERROR;
+    }
+    
+    return result;
+}
+
+BLAS_Matrix *SolveSimpleLinearSystem(BLAS_Matrix *A, BLAS_Matrix *B)
+{
+    SolveResult result = Solve(false, A, B, BLAS_NoFactor, BLAS_NoTranspose, BLAS_NoEquilibration);
+    
+    BLAS_Matrix *newMatrix = CreateMatrix(B->type, B->precision, B->numRows, B->numCols, 0, 0);
+    
+    if (result.status == NO_MATRIX_ERROR)
+    {
+        memcpy(newMatrix->buffer, result.X, newMatrix->bufferSize);
+    }
+    else
+    {
+        newMatrix->status = result.status;
+        newMatrix->lapack_info = result.info;
+    }
+    
+    ReleaseSolveResult(result);
+    
+    return newMatrix;
+}
+
 BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
 {
-    if (srcMatrix->numRows != srcMatrix->numCols)
+    if (srcMatrix == NULL)
     {
-        DLog("Only square matrices can be inverted");
+        DLog("Attempt to invert NULL matrix!");
         return NULL;
     }
     
     BLAS_Matrix *A = CopyMatrix(srcMatrix);
     
-    if (A == NULL)
+    if (srcMatrix->numRows != srcMatrix->numCols)
+    {
+        DLog("Only square matrices can be inverted");
+        A->status = EXPECTED_SQUARE_MATRIX_ERROR;
+        return A;
+    }
+    
+    if (A->status != NO_MATRIX_ERROR)
     {
         DLog("Could not copy source matrix");
-        return NULL;
+        return A;
     }
     
     __CLPK_integer m = A->numRows;
@@ -369,9 +572,10 @@ BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
         if (info != 0)
         {
             DLog("An error occurred in dgetrf_(): %d", info);
-            DeleteMatrix(A);
+            A->status = LAPACK_ROUTINE_ERROR;
+            A->lapack_info = info;
             
-            return NULL;
+            return A;
         }
         
         __CLPK_doublereal workSize;
@@ -388,9 +592,10 @@ BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
         if (info != 0)
         {
             DLog("An error occurred in dgetri_(): %d", info);
-            DeleteMatrix(A);
+            A->status = LAPACK_ROUTINE_ERROR;
+            A->lapack_info = info;
             
-            return NULL;
+            return A;
         }
     }
     else
@@ -400,9 +605,10 @@ BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
         if (info != 0)
         {
             DLog("An error occurred in zgetrf_(): %d", info);
-            DeleteMatrix(A);
+            A->status = LAPACK_ROUTINE_ERROR;
+            A->lapack_info = info;
             
-            return NULL;
+            return A;
         }
         
         __CLPK_doublecomplex workSize;
@@ -419,9 +625,10 @@ BLAS_Matrix *Inverse(const BLAS_Matrix *srcMatrix)
         if (info != 0)
         {
             DLog("An error occurred in zgetri_(): %d", info);
-            DeleteMatrix(A);
+            A->status = LAPACK_ROUTINE_ERROR;
+            A->lapack_info = info;
             
-            return NULL;
+            return A;
         }
     }
     
@@ -436,23 +643,28 @@ BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLA
         return NULL;
     }
     
+    BLAS_Matrix *dummyMatrix = CopyMatrix(A);
+    
     if ((A->type != generalMatrix && A->type != vectorMatrix) || (B->type != generalMatrix && B->type != vectorMatrix) || (C != NULL && (C->type != generalMatrix && C->type != vectorMatrix)))
     {
         DLog("At this time, only general matrices or vectors can be passed to this routine");
-        return NULL;
+        dummyMatrix->status = ILLEGAL_TYPE_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     // do some error-checking first
     if (A->precision != B->precision)
     {
         DLog("Both matrices must be of the same type");
-        return NULL;
+        dummyMatrix->status = PRECISION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     if (A->precision != complexPrecisionMatrix)
     {
-        DLog("This call is for Double Precision Matrices!");
-        return NULL;
+        DLog("This call is for Complex Precision Matrices!");
+        dummyMatrix->status = ILLEGAL_PRECISION_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     __CLPK_integer Arows = (transA == CblasNoTrans ? A->numRows : A->numCols);
@@ -463,14 +675,18 @@ BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLA
     if (Acols != Brows)
     {
         DLog("Incompatible A- & B-matrix dimensions!");
-        return NULL;
+        dummyMatrix->status = DIMENSION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     if (C != NULL && (C->numRows != Arows || C->numCols != Bcols))
     {
-        DLog("Incompatible C-matrix dimensions!");
-        return NULL;
+        dummyMatrix->status = DIMENSION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
+    
+    // if we get here, we no longer need dummyMatrix
+    ReleaseMatrix(dummyMatrix);
     
     __CLPK_integer k = Acols;
     __CLPK_integer m = Arows;
@@ -482,10 +698,10 @@ BLAS_Matrix *MultiplyComplexMatrices(__CLPK_doublecomplex alpha, int transA, BLA
     
     BLAS_Matrix *newC = (C != NULL ? CopyMatrix(C) : CreateMatrix(generalMatrix, complexPrecisionMatrix, ldc, n, 0, 0));
     
-    if (newC == NULL)
+    if (newC->status != NO_MATRIX_ERROR)
     {
         DLog("Could not create newC matrix");
-        return NULL;
+        return newC;
     }
     
     cblas_zgemm(CblasColMajor, transA, transB, m, n, k, &alpha, A->buffer, lda, B->buffer, ldb, &beta, newC->buffer, ldc);
@@ -501,23 +717,28 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
         return NULL;
     }
     
+    BLAS_Matrix *dummyMatrix = CopyMatrix(A);
+    
     if ((A->type != generalMatrix && A->type != vectorMatrix) || (B->type != generalMatrix && B->type != vectorMatrix) || (C != NULL && (C->type != generalMatrix && C->type != vectorMatrix)))
     {
         DLog("At this time, only general matrices or vectors can be passed to this routine");
-        return NULL;
+        dummyMatrix->status = ILLEGAL_TYPE_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     // do some error-checking first
     if (A->precision != B->precision)
     {
         DLog("Both matrices must be of the same type");
-        return NULL;
+        dummyMatrix->status = PRECISION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     if (A->precision != doublePrecisionMatrix)
     {
         DLog("This call is for Double Precision Matrices!");
-        return NULL;
+        dummyMatrix->status = ILLEGAL_PRECISION_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     __CLPK_integer Arows = (transA == CblasNoTrans ? A->numRows : A->numCols);
@@ -528,14 +749,18 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
     if (Acols != Brows)
     {
         DLog("Incompatible A- & B-matrix dimensions!");
-        return NULL;
+        dummyMatrix->status = DIMENSION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
     
     if (C != NULL && (C->numRows != Arows || C->numCols != Bcols))
     {
-        DLog("Incompatible C-matrix dimensions!");
-        return NULL;
+        dummyMatrix->status = DIMENSION_MISMATCH_MATRIX_ERROR;
+        return dummyMatrix;
     }
+    
+    // if we get here, we no longer need dummyMatrix
+    ReleaseMatrix(dummyMatrix);
     
     __CLPK_integer k = Acols;
     __CLPK_integer m = Arows;
@@ -547,10 +772,10 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
     
     BLAS_Matrix *newC = (C != NULL ? CopyMatrix(C) : CreateMatrix(generalMatrix, doublePrecisionMatrix, ldc, n, 0, 0));
     
-    if (newC == NULL)
+    if (newC->status != NO_MATRIX_ERROR)
     {
         DLog("Could not create newC matrix");
-        return NULL;
+        return newC;
     }
     
     cblas_dgemm(CblasColMajor, transA, transB, m, n, k, alpha, A->buffer, lda, B->buffer, ldb, beta, newC->buffer, ldc);
@@ -560,6 +785,8 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
 
 BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix)
 {
+    // This is a pretty inefficient function. Generally, it would be better to to use the "transpose" flag in the BLAS and LAPACK routines instead of actually transposing the matrix (those routines just switch up the indexes instead of actually transposing any matrices). 
+    
     // Diagonal matrices and vectors (as far as this library is concerned) are the same as their transposes.
     if (srcMatrix->type == diagonalMatrix || isVector(srcMatrix))
     {
@@ -574,19 +801,19 @@ BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix)
         {
             if (srcMatrix->precision == doublePrecisionMatrix)
             {
-                __CLPK_doublereal value = GetDoubleValue(srcMatrix, j, i);
+                __CLPK_doublereal value = GetDoubleValue(srcMatrix, j, i, NULL);
                 SetDoubleValue(newMatrix, i, j, value);
             }
             else if (srcMatrix->precision == complexPrecisionMatrix)
             {
-                __CLPK_doublecomplex value = GetComplexValue(srcMatrix, j, i);
+                __CLPK_doublecomplex value = GetComplexValue(srcMatrix, j, i, NULL);
                 SetComplexValue(newMatrix, i, j, value);
             }
             else
             {
                 DLog("Illegal precision specified!");
-                free(newMatrix);
-                return NULL;
+                newMatrix->status = ILLEGAL_PRECISION_MATRIX_ERROR;
+                return newMatrix;
             }
         }
     }
@@ -603,45 +830,30 @@ BLAS_Matrix *CopyMatrix(const BLAS_Matrix *srcMatrix)
 {
     if (srcMatrix == NULL)
     {
-        DLog("Cannot copy NULL matrix!");
+        DLog("Attempt to copy NULL matrix!");
         return NULL;
     }
     
-    size_t buffSize = 0;
+    BLAS_Matrix *newMatrix = CreateMatrix(srcMatrix->type, srcMatrix->precision, srcMatrix->numRows, srcMatrix->numCols, srcMatrix->numSubDiags, srcMatrix->numSuperDiags);
     
-    void *buff = AllocateMatrix(srcMatrix->type, srcMatrix->precision, srcMatrix->numRows, srcMatrix->numCols, srcMatrix->numSubDiags, srcMatrix->numSuperDiags, &buffSize);
-    
-    if (buff == NULL)
+    if (newMatrix->status != NO_MATRIX_ERROR)
     {
-        DLog("Could not allocate buffer for matrix!");
-        return NULL;
+        return newMatrix;
     }
     
-    
-    memcpy(buff, srcMatrix->buffer, buffSize);
-    
-    BLAS_Matrix *newMatrix = malloc(sizeof(BLAS_Matrix));
-    
-    if (newMatrix == NULL)
+    if (newMatrix->bufferSize != srcMatrix->bufferSize)
     {
-        DLog("Could not allocate memory for matrix struct!");
-        free(buff);
-        return NULL;
+        DLog("Buffer sizes do not match!");
+        newMatrix->status = BUFFERSIZE_MATRIX_ERROR;
+        return newMatrix;
     }
     
-    newMatrix->type = srcMatrix->type;
-    newMatrix->precision = srcMatrix->precision;
-    newMatrix->numRows = srcMatrix->numRows;
-    newMatrix->numCols = srcMatrix->numCols;
-    newMatrix->numSubDiags = srcMatrix->numSubDiags;
-    newMatrix->numSuperDiags = srcMatrix->numSuperDiags;
-    newMatrix->buffer = buff;
-    newMatrix->bufferSize = buffSize;
+    memcpy(newMatrix->buffer, srcMatrix->buffer, srcMatrix->bufferSize);
     
     return newMatrix;
 }
 
-void DeleteMatrix(BLAS_Matrix *matrix)
+void ReleaseMatrix(BLAS_Matrix *matrix)
 {
     if (matrix != NULL)
     {
@@ -657,11 +869,23 @@ BLAS_Matrix *CreateVector(MatrixPrecision precision, unsigned int numElements)
 
 BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned int rows, unsigned int columns, unsigned int subDiagonals, unsigned int superDiagonals)
 {
+    BLAS_Matrix *matrix = malloc(sizeof(BLAS_Matrix));
+    if (matrix == NULL)
+    {
+        ALog("Could not allocate memory for matrix struct!");
+        return NULL;
+    }
+    
+    // We set the buffer to NULL to ensure that any access crashes if there's an error
+    matrix->buffer = NULL;
+    matrix->status = NO_MATRIX_ERROR;
+    
     // Do a bunch of error-checking to start
     if (rows == 0 || columns == 0)
     {
         DLog("Either or both of rows and columns are 0");
-        return NULL;
+        matrix->status = ZERO_DIMENSION_MATRIX_ERROR;
+        return matrix;
     }
     
     if (type != vectorMatrix && (rows == 1 || columns == 1))
@@ -684,16 +908,25 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
     {
         // I don't think this code can ever be executed
         DLog("Vectors must be defined with at least one of 'rows' or 'columns' defined as 0");
-        return NULL;
+        matrix->status = VECTOR_DIMENSION_MATRIX_ERROR;
+        return matrix;
     }
     
-    if (type == symmetricMatrix || type == lowerTriangularMatrix || type == upperTriangularMatrix)
+    if (type == symmetricMatrix || type == lowerTriangularMatrix || type == upperTriangularMatrix || type == hermitianMatrix)
     {
         if (rows != columns)
         {
             DLog("Expected square dimensions for this type of matrix!");
-            return NULL;
+            matrix->status = EXPECTED_SQUARE_MATRIX_ERROR;
+            return matrix;
         }
+    }
+    
+    if (type == hermitianMatrix && precision != complexPrecisionMatrix)
+    {
+        DLog("Hermitian matrices must be complex precision!");
+        matrix->status = NONCOMPLEX_HERMITIAN_MATRIX_ERROR;
+        return matrix;
     }
     
     if (type == bandedMatrix)
@@ -703,7 +936,8 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
         if (rows != columns)
         {
             DLog("Expected square dimensions for this type of matrix!");
-            return NULL;
+            matrix->status = EXPECTED_SQUARE_MATRIX_ERROR;
+            return matrix;
         }
         
         // If the sub- or superDiagonals arguments are greater than the maximum allowed, we set it to the maximum.
@@ -719,9 +953,23 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
             superDiagonals = columns - 1;
         }
     }
+    else if (type == upperTriangularMatrix)
+    {
+        subDiagonals = 0;
+        superDiagonals = columns - 1;
+    }
+    else if (type == lowerTriangularMatrix)
+    {
+        subDiagonals = columns - 1;
+        superDiagonals = 0;
+    }
+    else if (type == diagonalMatrix)
+    {
+        subDiagonals = 0;
+        superDiagonals = 0;
+    }
     
-    BLAS_Matrix *matrix = malloc(sizeof(BLAS_Matrix));
-    
+    // If we get here, we were successful
     matrix->type = type;
     matrix->precision = precision;
     
@@ -755,9 +1003,9 @@ BLAS_Matrix *CreateMatrix(MatrixType type, MatrixPrecision precision,  unsigned 
     
     if (buff == NULL)
     {
-        free(matrix);
         DLog("Error creating the matrix buffer!");
-        return NULL;
+        matrix->status = BUFFER_ALLOCATION_MATRIX_ERROR;
+        return matrix;
     }
     
     matrix->buffer = buff;
@@ -795,8 +1043,9 @@ __CLPK_doublereal *AllocateMatrix(MatrixType type, MatrixPrecision precision,  u
         // Vectors only have a single row (or column). We will take the higher of rows or columns as the dimension of the vector.
         numElements = (rows > columns ? rows : columns);
     }
-    else if (type == generalMatrix)
+    else if (type == generalMatrix || type == symmetricMatrix || type == positiveDefiniteMatrix || type == hermitianMatrix)
     {
+        // the solving routines do not yield any space-saving for symmeteric (or positive definite) matrices
         numElements = rows * columns;
     }
     else if (type == lowerTriangularMatrix || type == upperTriangularMatrix)
@@ -851,14 +1100,14 @@ char *MatrixAsString(BLAS_Matrix *theMatrix)
         {
             if (theMatrix->precision == doublePrecisionMatrix)
             {
-                __CLPK_doublereal value = GetDoubleValue(theMatrix, j, i);
+                __CLPK_doublereal value = GetDoubleValue(theMatrix, j, i, NULL);
                 char tempString[11];
                 snprintf(tempString, 11, "%10.3G", value);
                 strcat(buffer, tempString);
             }
             else if (theMatrix->precision == complexPrecisionMatrix)
             {
-                __CLPK_doublecomplex value = GetComplexValue(theMatrix, j, i);
+                __CLPK_doublecomplex value = GetComplexValue(theMatrix, j, i, NULL);
                 char tempString[21];
                 snprintf(tempString, 21, "%10.3G%+10.3G", value.r, value.i);
             }
@@ -884,12 +1133,12 @@ char *ElementString(BLAS_Matrix *matrix, unsigned int row, unsigned int col)
     
     if (matrix->precision == doublePrecisionMatrix)
     {
-        __CLPK_doublereal value = GetDoubleValue(matrix, row, col);
+        __CLPK_doublereal value = GetDoubleValue(matrix, row, col, NULL);
         snprintf(tempString, 256, "%.3G", value);
     }
     else if (matrix->precision == complexPrecisionMatrix)
     {
-        __CLPK_doublecomplex value = GetComplexValue(matrix, row, col);
+        __CLPK_doublecomplex value = GetComplexValue(matrix, row, col, NULL);
         
         snprintf(tempString, 256, "%.3G%+.3G", value.r, value.i);
     }
