@@ -387,6 +387,10 @@ void ReleaseSolveResult(SolveResult sResult)
     free(sResult.fErr);
     free(sResult.R);
     free(sResult.X);
+    free(sResult.work);
+    free(sResult.iWork);
+    free(sResult.rWork);
+    free(sResult.ipiv);
 }
 
 
@@ -408,9 +412,9 @@ SolveResult Solve(bool useExtendedMethod, BLAS_Matrix *A, BLAS_Matrix *B, BLAS_F
         return result;
     }
     
-    if (B->type != generalMatrix)
+    if (B->type != generalMatrix && B->type != vectorMatrix)
     {
-        DLog("B matrix must be a general matrix");
+        DLog("B matrix must be a vector or a general matrix");
         result.status = ILLEGAL_TYPE_MATRIX_ERROR;
         return result;
     }
@@ -440,11 +444,12 @@ SolveResult Solve(bool useExtendedMethod, BLAS_Matrix *A, BLAS_Matrix *B, BLAS_F
             if (A->type == generalMatrix)
             {
                 dgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
+                
             }
             else if (A->type == bandedMatrix || A->type == upperTriangularMatrix || A->type == lowerTriangularMatrix || A->type == diagonalMatrix)
             {
                 __CLPK_integer ldab = 2 * kl + ku + 1;
-                dgbsv_(&n, &kl, &ku, &nrhs,result.A, &ldab, result.ipiv, result.B, &result.ldb, &result.info);
+                dgbsv_(&n, &kl, &ku, &nrhs, result.A, &ldab, result.ipiv, result.B, &result.ldb, &result.info);
             }
             else if (A->type == symmetricMatrix)
             {
@@ -623,11 +628,12 @@ BLAS_Matrix *SolveSimpleLinearSystem(BLAS_Matrix *A, BLAS_Matrix *B)
 {
     SolveResult result = Solve(false, A, B, BLAS_NoFactor, BLAS_NoTranspose, BLAS_NoEquilibration);
     
+    // Saving the result is a bit complicated by the way we return data in the event of an error (we can't just use CopyMatrix)
     BLAS_Matrix *newMatrix = CreateMatrix(B->type, B->precision, B->numRows, B->numCols, 0, 0);
     
     if (result.status == NO_MATRIX_ERROR)
     {
-        memcpy(newMatrix->buffer, result.X, newMatrix->bufferSize);
+        memcpy(newMatrix->buffer, result.B, newMatrix->bufferSize);
     }
     else
     {
