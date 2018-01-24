@@ -71,6 +71,10 @@ typedef struct _tagSolveResult {
     __CLPK_doublereal *fErr;
     __CLPK_doublereal *bErr;
     
+    void *work;
+    __CLPK_integer *iWork;
+    __CLPK_doublereal *rWork;
+    
     __CLPK_integer info;
     
     void *X;

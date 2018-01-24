@@ -478,6 +478,37 @@ SolveResult Solve(bool useExtendedMethod, BLAS_Matrix *A, BLAS_Matrix *B, BLAS_F
             {
                 zgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
             }
+            else if (A->type == bandedMatrix || A->type == upperTriangularMatrix || A->type == lowerTriangularMatrix || A->type == diagonalMatrix)
+            {
+                __CLPK_integer ldab = 2 * kl + ku + 1;
+                zgbsv_(&n, &kl, &ku, &nrhs,result.A, &ldab, result.ipiv, result.B, &result.ldb, &result.info);
+            }
+            else if (A->type == symmetricMatrix)
+            {
+                char uplo[2] = "U";
+                __CLPK_doublecomplex workSize;
+                __CLPK_integer lWork = -1;
+                
+                zsysv_(uplo, &n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &workSize, &lWork, &result.info);
+                
+                lWork = (__CLPK_integer)workSize.r;
+                __CLPK_doublecomplex work[lWork];
+                
+                zsysv_(uplo, &n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, work, &lWork, &result.info);
+            }
+            else if (A->type == positiveDefiniteMatrix)
+            {
+                char uplo[2] = "U";
+                
+                zposv_(uplo, &n, &nrhs, result.A, &result.lda, result.B, &result.ldb, &result.info);
+            }
+            
+            else
+            {
+                DLog("Illegal matrix type!");
+                result.status = ILLEGAL_TYPE_MATRIX_ERROR;
+                return result;
+            }
         }
         else
         {
@@ -490,11 +521,87 @@ SolveResult Solve(bool useExtendedMethod, BLAS_Matrix *A, BLAS_Matrix *B, BLAS_F
     {
         if (A->precision == doublePrecisionMatrix)
         {
-            
+            if (A->type == generalMatrix)
+            {
+                // dgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
+                char fact = 'N';
+                if (factor == BLAS_Equilibrate)
+                {
+                    fact = 'E';
+                }
+                
+                char trans = 'N';
+                if (transpose == BLAS_Transpose)
+                {
+                    trans = 'T';
+                }
+                else if (transpose == BLAS_ConjugateTranspose)
+                {
+                    trans = 'C';
+                }
+                
+                result.AF = malloc(A->bufferSize);
+                result.ldaf = n;
+                result.equed = 'N';
+                result.R = calloc(n, sizeof(__CLPK_doublereal));
+                result.C = calloc(n, sizeof(__CLPK_doublereal));
+                result.X = malloc(B->bufferSize);
+                result.ldx = n;
+                result.fErr = calloc(nrhs, sizeof(__CLPK_doublereal));
+                result.bErr = calloc(nrhs, sizeof(__CLPK_doublereal));
+                result.work = calloc(4 * n, sizeof(__CLPK_doublereal));
+                result.iWork = calloc(n, sizeof(__CLPK_integer));
+                
+                dgesvx_(&fact, &trans, &n, &nrhs, result.A, &result.lda, result.AF, &result.ldaf, result.ipiv, &result.equed, result.R, result.C, result.B, &result.ldb, result.X, &result.ldx, &result.rCond, result.fErr, result.bErr, result.work, result.iWork, &result.info);
+            }
+            else
+            {
+                DLog("Unimplemented matrix type!");
+                result.status = ILLEGAL_TYPE_MATRIX_ERROR;
+                return result;
+            }
         }
         else if (A->precision == complexPrecisionMatrix)
         {
-            
+            if (A->type == generalMatrix)
+            {
+                // dgesv_(&n, &nrhs, result.A, &result.lda, result.ipiv, result.B, &result.ldb, &result.info);
+                char fact = 'N';
+                if (factor == BLAS_Equilibrate)
+                {
+                    fact = 'E';
+                }
+                
+                char trans = 'N';
+                if (transpose == BLAS_Transpose)
+                {
+                    trans = 'T';
+                }
+                else if (transpose == BLAS_ConjugateTranspose)
+                {
+                    trans = 'C';
+                }
+                
+                result.AF = malloc(A->bufferSize);
+                result.ldaf = n;
+                result.equed = 'N';
+                result.R = calloc(n, sizeof(__CLPK_doublereal));
+                result.C = calloc(n, sizeof(__CLPK_doublereal));
+                result.X = malloc(B->bufferSize);
+                result.ldx = n;
+                result.fErr = calloc(nrhs, sizeof(__CLPK_doublereal));
+                result.bErr = calloc(nrhs, sizeof(__CLPK_doublereal));
+                result.work = calloc(2 * n, sizeof(__CLPK_doublecomplex));
+                result.rWork = calloc(2 * n, sizeof(__CLPK_doublereal));
+                
+                zgesvx_(&fact, &trans, &n, &nrhs, result.A, &result.lda, result.AF, &result.ldaf, result.ipiv, &result.equed, result.R, result.C, result.B, &result.ldb, result.X, &result.ldx, &result.rCond, result.fErr, result.bErr, result.work, result.rWork, &result.info);
+            }
+            else
+            {
+                DLog("Unimplemented matrix type!");
+                result.status = ILLEGAL_TYPE_MATRIX_ERROR;
+                return result;
+            }
         }
         else
         {
@@ -785,7 +892,7 @@ BLAS_Matrix *MultiplyDoubleMatrices(__CLPK_doublereal alpha, int transA, BLAS_Ma
 
 BLAS_Matrix *TransposeMatrix(const BLAS_Matrix *srcMatrix)
 {
-    // This is a pretty inefficient function. Generally, it would be better to to use the "transpose" flag in the BLAS and LAPACK routines instead of actually transposing the matrix (those routines just switch up the indexes instead of actually transposing any matrices). 
+    // This is a pretty inefficient function. Generally, it would be better to to use the "transpose" flag in the BLAS and LAPACK routines instead of actually transposing the matrix (those routines just switch up the indexes instead of actually transposing any matrices).
     
     // Diagonal matrices and vectors (as far as this library is concerned) are the same as their transposes.
     if (srcMatrix->type == diagonalMatrix || isVector(srcMatrix))
