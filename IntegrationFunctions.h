@@ -16,7 +16,8 @@
 #include <gsl/gsl_integration.h>
 
 // The "stopping" point for the integrals. This should be as small as possible without making calculations take too long
-#define BBF_RELATIVE_ERROR (1.0E-4)
+#define BBF_RELATIVE_ERROR (1.0E-8)
+#define BBF_ABSOLUTE_ERROR (1.0E-12)
 
 // Public function declarations
 double M0(double x);
@@ -37,6 +38,7 @@ double IntegralOfTL1(double a, double b);
 // Scaled versions of selected functions (used for accuracy and performance)
 
 double ScaledIntegralOfTK1(double a, double b);
+double ScaledIntegralOfTK1From0to(double b);
 double ScaledIntegralOfTI1From0to(double b);
 double ScaledIntegralOfTI1(double a, double b);
 

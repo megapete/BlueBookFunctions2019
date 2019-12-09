@@ -99,6 +99,17 @@ double IntegralOfTK1(double a, double b)
     return IntegralOfTK1From0to(b) - IntegralOfTK1From0to(a);
 }
 
+double ScaledIntegralOfTK1From0to(double b)
+{
+    // return IntK1 where the actual integral = π / 2.0 * (1.0 - exp(-b) * IntK1)
+    double Rk0 = gsl_sf_bessel_K0_scaled(b);
+    double Rk1 = gsl_sf_bessel_K1_scaled(b);
+    
+    double result = b * (M1(b) * Rk0 + M0(b) * Rk1);
+    
+    return result;
+}
+
 double ScaledIntegralOfTK1(double a, double b)
 {
     // We assume that in the event a>b, the caller simply mixed the two up
