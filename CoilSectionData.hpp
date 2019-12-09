@@ -20,12 +20,16 @@
 #define CONVERGENCE_ITERATIONS 300
 #endif
 
-#ifndef WINODW_HT_FACTOR
-#define WINODW_HT_FACTOR 3.0
+#ifndef WINDOW_HT_FACTOR
+#define WINDOW_HT_FACTOR 3.0
 #endif
 
 #ifndef MAX_COILS
 #define MAX_COILS 8
+#endif
+
+#ifndef PCH_MU0
+#define PCH_MU0 (M_PI * 4.0E-7)
 #endif
 
 typedef struct pch_ScaledDoublet {
@@ -103,6 +107,10 @@ public:
     CoilSection();
     CoilSection(int coilRef, PCH_Rect sectionRect, double N, double J, double windHt, double coreRadius);
     ~CoilSection();
+    
+    // Inductance calculators & associated functions
+    double Jn(int n);
+    double SelfInductance();
 };
 
 #endif /* CoilSectionData_hpp */
