@@ -6,7 +6,7 @@
 //  Copyright © 2019 Peter Huber. All rights reserved.
 //
 
-#include "CoilSectionData.h"
+#include "CoilSectionData.hpp"
 #include "IntegrationFunctions.h"
 
 #include "PCH_C_Logging.h"

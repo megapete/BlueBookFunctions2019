@@ -18,8 +18,8 @@
 		D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */ = {isa = PBXBuildFile; fileRef = D37422D620083C690050D3DB /* BLAS_Matrix.h */; };
 		D37422DA2008F3740050D3DB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D37422D92008F3740050D3DB /* Accelerate.framework */; };
 		D3809EC0239D9846008D0DCD /* CoilSectionData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */; };
-		D3809EC1239D9846008D0DCD /* CoilSectionData.h in Headers */ = {isa = PBXBuildFile; fileRef = D3809EBF239D9846008D0DCD /* CoilSectionData.h */; };
-		D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.h in Headers */ = {isa = PBXBuildFile; fileRef = D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */; };
+		D3809EC1239D9846008D0DCD /* CoilSectionData.hpp in Headers */ = {isa = PBXBuildFile; fileRef = D3809EBF239D9846008D0DCD /* CoilSectionData.hpp */; };
+		D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.hpp in Headers */ = {isa = PBXBuildFile; fileRef = D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,8 +47,8 @@
 		D37422DD2008F9270050D3DB /* PCH_C_Logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_C_Logging.h; sourceTree = "<group>"; };
 		D37422F72009229D0050D3DB /* TestMatrixProg.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = TestMatrixProg.xcodeproj; sourceTree = "<group>"; };
 		D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CoilSectionData.cpp; sourceTree = "<group>"; };
-		D3809EBF239D9846008D0DCD /* CoilSectionData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoilSectionData.h; sourceTree = "<group>"; };
-		D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_BasicStructs.h; sourceTree = "<group>"; };
+		D3809EBF239D9846008D0DCD /* CoilSectionData.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CoilSectionData.hpp; sourceTree = "<group>"; };
+		D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PCH_BasicStructs.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,8 +69,8 @@
 			children = (
 				D30453CC1E8BDC8B00CA581C /* Inductance.h */,
 				D30453CB1E8BDC8B00CA581C /* Inductance.c */,
-				D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */,
-				D3809EBF239D9846008D0DCD /* CoilSectionData.h */,
+				D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.hpp */,
+				D3809EBF239D9846008D0DCD /* CoilSectionData.hpp */,
 				D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */,
 				D30453C11E89973E00CA581C /* LetteredFunctions.h */,
 				D30453C01E89973E00CA581C /* LetteredFunctions.c */,
@@ -117,12 +117,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.h in Headers */,
+				D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.hpp in Headers */,
 				D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */,
 				D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */,
 				D30453CE1E8BDC8B00CA581C /* Inductance.h in Headers */,
 				D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */,
-				D3809EC1239D9846008D0DCD /* CoilSectionData.h in Headers */,
+				D3809EC1239D9846008D0DCD /* CoilSectionData.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,7 +259,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -308,7 +308,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 			};

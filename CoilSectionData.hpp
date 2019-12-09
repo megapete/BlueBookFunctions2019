@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "PCH_BasicStructs.h"
+#include <string>
+#include <map>
+#include "PCH_BasicStructs.hpp"
 
 #ifndef CONVERGENCE_ITERATIONS
 #define CONVERGENCE_ITERATIONS 300
@@ -53,11 +55,34 @@ typedef struct pch_RadialData {
     
 } CoilRadialData;
 
+typedef struct pch_SectionAttributes {
+    
+    std::string sectionID = "";
+    
+    int serialNumber = -1;
+    int inNode;
+    int outNode;
+    
+    double seriesCapacitance;
+    std::map<std::string, double> shuntCapacitances;
+    
+    double resistance;
+    
+    double selfInductance;
+    std::map<std::string, double> mutualInductances;
+    
+    // constructors & destructors
+    pch_SectionAttributes();
+    pch_SectionAttributes(std::string sectionID, int serialNumber, int inNode, int outNode);
+    ~pch_SectionAttributes();
+    
+} PCH_SectionAttributes;
+
 class CoilSection
 {
     
 private:
-    // an array that holds the radial constants for each coil
+    // an array that holds the radial constants for each coil (class property)
     static CoilRadialData *radialDataArray;
     
 public:
@@ -65,12 +90,14 @@ public:
     // an index into the radialDataArray
     int coilRef = -1;
     
-    // section data
+    // immutable section data
     double N = 0;
     double J = 0;
     double windHt = 0;
     double coreRadius = 0;
     PCH_Rect sectionRect = PCH_Rect();
+    
+    PCH_SectionAttributes attributes;
     
     // constructors & destructors
     CoilSection();
