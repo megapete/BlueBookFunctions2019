@@ -17,6 +17,9 @@
 		D37422D720083C690050D3DB /* BLAS_Matrix.c in Sources */ = {isa = PBXBuildFile; fileRef = D37422D520083C690050D3DB /* BLAS_Matrix.c */; };
 		D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */ = {isa = PBXBuildFile; fileRef = D37422D620083C690050D3DB /* BLAS_Matrix.h */; };
 		D37422DA2008F3740050D3DB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D37422D92008F3740050D3DB /* Accelerate.framework */; };
+		D3809EC0239D9846008D0DCD /* CoilSectionData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */; };
+		D3809EC1239D9846008D0DCD /* CoilSectionData.h in Headers */ = {isa = PBXBuildFile; fileRef = D3809EBF239D9846008D0DCD /* CoilSectionData.h */; };
+		D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.h in Headers */ = {isa = PBXBuildFile; fileRef = D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +46,9 @@
 		D37422D92008F3740050D3DB /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		D37422DD2008F9270050D3DB /* PCH_C_Logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_C_Logging.h; sourceTree = "<group>"; };
 		D37422F72009229D0050D3DB /* TestMatrixProg.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = TestMatrixProg.xcodeproj; sourceTree = "<group>"; };
+		D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CoilSectionData.cpp; sourceTree = "<group>"; };
+		D3809EBF239D9846008D0DCD /* CoilSectionData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoilSectionData.h; sourceTree = "<group>"; };
+		D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_BasicStructs.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,14 +67,17 @@
 		D30453B01E8996F700CA581C = {
 			isa = PBXGroup;
 			children = (
-				D30453CB1E8BDC8B00CA581C /* Inductance.c */,
 				D30453CC1E8BDC8B00CA581C /* Inductance.h */,
-				D30453C01E89973E00CA581C /* LetteredFunctions.c */,
+				D30453CB1E8BDC8B00CA581C /* Inductance.c */,
+				D3809EC3239DC2D9008D0DCD /* PCH_BasicStructs.h */,
+				D3809EBF239D9846008D0DCD /* CoilSectionData.h */,
+				D3809EBE239D9846008D0DCD /* CoilSectionData.cpp */,
 				D30453C11E89973E00CA581C /* LetteredFunctions.h */,
-				D30453C41E89976500CA581C /* IntegrationFunctions.c */,
+				D30453C01E89973E00CA581C /* LetteredFunctions.c */,
 				D30453C51E89976500CA581C /* IntegrationFunctions.h */,
-				D37422D520083C690050D3DB /* BLAS_Matrix.c */,
+				D30453C41E89976500CA581C /* IntegrationFunctions.c */,
 				D37422D620083C690050D3DB /* BLAS_Matrix.h */,
+				D37422D520083C690050D3DB /* BLAS_Matrix.c */,
 				D37422DD2008F9270050D3DB /* PCH_C_Logging.h */,
 				D30453BA1E8996F800CA581C /* Products */,
 				D30453C81E89991600CA581C /* Frameworks */,
@@ -108,10 +117,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3809EC5239DC2D9008D0DCD /* PCH_BasicStructs.h in Headers */,
 				D30453C31E89973E00CA581C /* LetteredFunctions.h in Headers */,
 				D37422D820083C690050D3DB /* BLAS_Matrix.h in Headers */,
 				D30453CE1E8BDC8B00CA581C /* Inductance.h in Headers */,
 				D30453C71E89976500CA581C /* IntegrationFunctions.h in Headers */,
+				D3809EC1239D9846008D0DCD /* CoilSectionData.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,7 +152,7 @@
 		D30453B11E8996F700CA581C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 1120;
 				ORGANIZATIONNAME = "Peter Huber";
 				TargetAttributes = {
 					D30453B81E8996F700CA581C = {
@@ -152,10 +163,11 @@
 			};
 			buildConfigurationList = D30453B41E8996F700CA581C /* Build configuration list for PBXProject "BlueBookFunctions" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = D30453B01E8996F700CA581C;
 			productRefGroup = D30453BA1E8996F800CA581C /* Products */;
@@ -192,6 +204,7 @@
 				D30453CD1E8BDC8B00CA581C /* Inductance.c in Sources */,
 				D30453C61E89976500CA581C /* IntegrationFunctions.c in Sources */,
 				D30453C21E89973E00CA581C /* LetteredFunctions.c in Sources */,
+				D3809EC0239D9846008D0DCD /* CoilSectionData.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,6 +224,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -218,6 +232,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -264,6 +279,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -271,6 +287,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
