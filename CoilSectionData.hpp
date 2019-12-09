@@ -111,6 +111,7 @@ public:
     // Inductance calculators & associated functions
     double Jn(int n);
     double SelfInductance();
+    double MutualInductanceTo(CoilSection& otherSection);
 };
 
 #endif /* CoilSectionData_hpp */

@@ -199,3 +199,31 @@ double CoilSection::SelfInductance()
     
     return result;
 }
+
+double CoilSection::MutualInductanceTo(CoilSection& otherSection)
+{
+    bool isSameRadialPosition = fabs(this->sectionRect.origin.x - otherSection.sectionRect.origin.x) <= 0.001;
+    
+    double N1 = this->N;
+    double I1 = this->J * this->sectionRect.Area() / N1;
+    
+    double N2 = otherSection.N;
+    double I2 = otherSection.J * otherSection.sectionRect.Area() / N2;
+    
+    double r1 = this->sectionRect.origin.x;
+    double r2 = r1 + this->sectionRect.size.width;
+    double r3 = otherSection.sectionRect.origin.x;
+    double rc = this->coreRadius;
+    
+    double result = 0.0;
+    
+    if (isSameRadialPosition)
+    {
+        result = (M_PI * PCH_MU0 * N1 * N2 / (6.0 * WINDOW_HT_FACTOR * this->windHt)) * (gsl_pow_2(r2 + r1) + 2.0 * gsl_pow_2(r1));
+    }
+    else
+    {
+        result = (M_PI * PCH_MU0 * N1 * N2 / (3.0 * WINDOW_HT_FACTOR * this->windHt)) * (gsl_pow_2(r1) + r1 * r2 + gsl_pow_2(r2));
+    }
+    
+}
