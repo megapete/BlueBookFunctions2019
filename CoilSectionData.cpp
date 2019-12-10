@@ -94,6 +94,7 @@ pch_SectionAttributes::pch_SectionAttributes()
     
 }
 
+
 pch_SectionAttributes::pch_SectionAttributes(std::string sectionID, int serialNumber, int inNode, int outNode)
 {
     this->sectionID = sectionID;
@@ -102,16 +103,19 @@ pch_SectionAttributes::pch_SectionAttributes(std::string sectionID, int serialNu
     this->outNode = outNode;
 }
 
+
 pch_SectionAttributes::~pch_SectionAttributes()
 {
     
 }
+
 
 #pragma mark CoilSection - Constructors
 CoilSection::CoilSection()
 {
     // dummy constructor, does nothing
 }
+
 
 CoilSection::CoilSection(int coilRef, PCH_Rect sectionRect, double N, double J, double windHt, double coreRadius)
 {
@@ -148,6 +152,7 @@ double CoilSection::Jn(int n)
     
     return (2.0 * this->J / nPi) * (sin(nPi * z2 / useWindHt) - sin(nPi * z1 / useWindHt));
 }
+
 
 double CoilSection::SelfInductance()
 {
@@ -200,6 +205,7 @@ double CoilSection::SelfInductance()
     return result;
 }
 
+
 double CoilSection::MutualInductanceTo(CoilSection& otherSection)
 {
     bool isSameRadialPosition = fabs(this->sectionRect.origin.x - otherSection.sectionRect.origin.x) <= 0.001;
@@ -226,4 +232,57 @@ double CoilSection::MutualInductanceTo(CoilSection& otherSection)
         result = (M_PI * PCH_MU0 * N1 * N2 / (3.0 * WINDOW_HT_FACTOR * this->windHt)) * (gsl_pow_2(r1) + r1 * r2 + gsl_pow_2(r2));
     }
     
+    double multiplier = M_PI * PCH_MU0 * WINDOW_HT_FACTOR * this->windHt * N1 * N2 / ((N1 * I1) * (N2 * I2));
+    
+    int convergenceIterations = CONVERGENCE_ITERATIONS;
+    
+    for (int i=0; i<convergenceIterations; i++)
+    {
+        int n = i + 1;
+               
+        double m = n * M_PI / (WINDOW_HT_FACTOR * this->windHt);
+        double mPow4 = m * m * m * m;
+        
+        double x1 = m * r1;
+        double x2 = m * r2;
+        double x3 = m * r3;
+        double xc = m * rc;
+        
+        int coilIndex = this->coilRef;
+        
+        if (isSameRadialPosition)
+        {
+            double scaledFn = CoilSection::radialDataArray[coilIndex].ScaledF[i];
+            
+            double exponentCnDn = 2.0 * (xc - x1);
+            
+            double scaledCn = CoilSection::radialDataArray[coilIndex].ScaledC[i];
+            
+            PCH_ScaledDoublet combinedL1n = CoilSection::radialDataArray[coilIndex].PartialScaledIntL1[i];
+            double IntL1TermUnscaled = combinedL1n.unscaled;
+            double scaledI1 = combinedL1n.scaled;
+            
+            double scaledEn = CoilSection::radialDataArray[coilIndex].ScaledE[i];
+            
+            double newWay = M_PI / 2.0 * exp(x1 - x2) * (-scaledEn) * scaledI1;
+            newWay -= (M_PI / 2.0) *  IntL1TermUnscaled;
+            newWay += exp(exponentCnDn) * (scaledFn * scaledCn);
+            
+            result += multiplier * (this->Jn(n) * otherSection.Jn(n) / mPow4) * newWay;
+        }
+        else
+        {
+            int otherCoilIndex = otherSection.coilRef;
+            
+            double firstProduct = CoilSection::radialDataArray[otherCoilIndex].ScaledC[i] * CoilSection::radialDataArray[coilIndex].ScaledIntI1[i];
+            
+            double secondProduct = CoilSection::radialDataArray[otherCoilIndex].ScaledD[i] * CoilSection::radialDataArray[coilIndex].ScaledC[i];
+            
+            double newWay = exp(x1 - x3) * firstProduct + exp(2.0 * xc - x1 - x3) * secondProduct;
+            
+            result += multiplier * (this->Jn(n) * otherSection.Jn(n) / mPow4) * newWay;
+        }
+    }
+    
+    return result;
 }
