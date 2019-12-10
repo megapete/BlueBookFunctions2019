@@ -112,6 +112,11 @@ double ScaledIntegralOfTK1From0to(double b)
 
 double ScaledIntegralOfTK1(double a, double b)
 {
+    if (a == 0)
+    {
+        return ScaledIntegralOfTK1From0to(b);
+    }
+    
     // We assume that in the event a>b, the caller simply mixed the two up
     if (a > b)
     {
@@ -122,8 +127,8 @@ double ScaledIntegralOfTK1(double a, double b)
         b = newB;
     }
     
-    double Rk0a = (a != 0 ? gsl_sf_bessel_K0_scaled(a) : 0.0);
-    double Rk1a = (a != 0 ? gsl_sf_bessel_K1_scaled(a) : 0.0);
+    double Rk0a = gsl_sf_bessel_K0_scaled(a);
+    double Rk1a = gsl_sf_bessel_K1_scaled(a);
     double Rk0b = gsl_sf_bessel_K0_scaled(b);
     double Rk1b = gsl_sf_bessel_K1_scaled(b);
     
