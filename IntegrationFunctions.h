@@ -20,6 +20,10 @@
 #define BBF_ABSOLUTE_ERROR (1.0E-12)
 
 // Public function declarations
+#ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
+extern "C" {
+#endif
+
 double M0(double x);
 double M1(double x);
 
@@ -37,7 +41,9 @@ double IntegralOfTL1(double a, double b);
 
 // Scaled versions of selected functions (used for accuracy and performance)
 
+
 double ScaledIntegralOfTK1(double a, double b);
+
 double ScaledIntegralOfTK1From0to(double b);
 double ScaledIntegralOfTI1From0to(double b);
 double ScaledIntegralOfTI1(double a, double b);
@@ -47,5 +53,9 @@ double PartialScaledIntegralOfTL1(double a, double b, double *scaledResult);
 
 // Alternate versions of selected functions (used for accuracy and performance)
 double AlternateIntegralOfTL1(double a, double b);
+
+#ifdef __cplusplus /* If this is a C++ compiler, end C linkage */
+}
+#endif
 
 #endif /* IntegrationFunctions_h */

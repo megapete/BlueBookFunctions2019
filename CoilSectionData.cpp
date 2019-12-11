@@ -11,6 +11,8 @@
 
 #include "PCH_C_Logging.h"
 
+// extern "C" double ScaledIntegralOfTK1(double, double);
+
 #pragma mark CoilRadialData - Radial data field initializer
 static CoilRadialData InitialRadialData[] = {CoilRadialData(), CoilRadialData(), CoilRadialData(), CoilRadialData(), CoilRadialData(), CoilRadialData(), CoilRadialData(), CoilRadialData()};
 
