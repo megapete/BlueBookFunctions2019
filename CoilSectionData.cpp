@@ -142,6 +142,11 @@ CoilSection::CoilSection(int coilRef, PCH_Rect sectionRect, double N, double J, 
     
 }
 
+CoilSection::~CoilSection()
+{
+    // dummy desstructor, does nothing
+}
+
 #pragma mark CoilSection functions
 
 double CoilSection::Jn(int n)
